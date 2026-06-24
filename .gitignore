@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.vite/
+*.zip
+npm-debug.log*
+vite-dev*.log
+character-lab-verification.png

@@ -1,0 +1,110 @@
+{
+  "id": "hero",
+  "displayName": "Hero Character Test Rig",
+  "source": "Meshy_AI_Athletic_Figure_in_Gr_biped.zip",
+  "baseAssetId": "idle-3",
+  "assets": [
+    {
+      "id": "idle-3",
+      "label": "Idle 3",
+      "type": "base-animation",
+      "url": "/assets/characters/hero/Meshy_AI_Athletic_Figure_in_Gr_biped/Meshy_AI_Athletic_Figure_in_Gr_biped_Animation_Idle_3_withSkin.glb"
+    },
+    {
+      "id": "idle-6",
+      "label": "Idle 6",
+      "type": "animation",
+      "url": "/assets/characters/hero/Meshy_AI_Athletic_Figure_in_Gr_biped/Meshy_AI_Athletic_Figure_in_Gr_biped_Animation_Idle_6_withSkin.glb"
+    },
+    {
+      "id": "jump",
+      "label": "Regular Jump",
+      "type": "animation",
+      "url": "/assets/characters/hero/Meshy_AI_Athletic_Figure_in_Gr_biped/Meshy_AI_Athletic_Figure_in_Gr_biped_Animation_Regular_Jump_withSkin.glb"
+    },
+    {
+      "id": "roll-dodge-2",
+      "label": "Roll Dodge 2",
+      "type": "animation",
+      "url": "/assets/characters/hero/Meshy_AI_Athletic_Figure_in_Gr_biped/Meshy_AI_Athletic_Figure_in_Gr_biped_Animation_Roll_Dodge_2_withSkin.glb"
+    },
+    {
+      "id": "roll-dodge-3",
+      "label": "Roll Dodge 3",
+      "type": "animation",
+      "url": "/assets/characters/hero/Meshy_AI_Athletic_Figure_in_Gr_biped/Meshy_AI_Athletic_Figure_in_Gr_biped_Animation_Roll_Dodge_3_withSkin.glb"
+    },
+    {
+      "id": "run",
+      "label": "Running",
+      "type": "animation",
+      "url": "/assets/characters/hero/Meshy_AI_Athletic_Figure_in_Gr_biped/Meshy_AI_Athletic_Figure_in_Gr_biped_Animation_Running_withSkin.glb"
+    },
+    {
+      "id": "walk-in-place",
+      "label": "Walking 2 Inplace",
+      "type": "animation",
+      "url": "/assets/characters/hero/Meshy_AI_Athletic_Figure_in_Gr_biped/Meshy_AI_Athletic_Figure_in_Gr_biped_Animation_walking_2_inplace_withSkin.glb"
+    },
+    {
+      "id": "walk",
+      "label": "Walking",
+      "type": "animation",
+      "url": "/assets/characters/hero/Meshy_AI_Athletic_Figure_in_Gr_biped/Meshy_AI_Athletic_Figure_in_Gr_biped_Animation_Walking_withSkin.glb"
+    },
+    {
+      "id": "spell-cast",
+      "label": "Mage Spell Cast",
+      "type": "animation",
+      "url": "/assets/characters/hero/Meshy_AI_Athletic_Figure_in_Gr_biped/Meshy_AI_Athletic_Figure_in_Gr_biped_Animation_mage_soell_cast_withSkin.glb"
+    },
+    {
+      "id": "spell-cast-1",
+      "label": "Mage Spell Cast 1",
+      "type": "animation",
+      "url": "/assets/characters/hero/Meshy_AI_Athletic_Figure_in_Gr_biped/Meshy_AI_Athletic_Figure_in_Gr_biped_Animation_mage_soell_cast_1_withSkin.glb"
+    },
+    {
+      "id": "spell-cast-2",
+      "label": "Mage Spell Cast 2",
+      "type": "animation",
+      "url": "/assets/characters/hero/Meshy_AI_Athletic_Figure_in_Gr_biped/Meshy_AI_Athletic_Figure_in_Gr_biped_Animation_mage_soell_cast_2_withSkin.glb"
+    },
+    {
+      "id": "spell-cast-3",
+      "label": "Mage Spell Cast 3",
+      "type": "animation",
+      "url": "/assets/characters/hero/Meshy_AI_Athletic_Figure_in_Gr_biped/Meshy_AI_Athletic_Figure_in_Gr_biped_Animation_mage_soell_cast_3_withSkin.glb"
+    },
+    {
+      "id": "spell-cast-4",
+      "label": "Mage Spell Cast 4",
+      "type": "animation",
+      "url": "/assets/characters/hero/Meshy_AI_Athletic_Figure_in_Gr_biped/Meshy_AI_Athletic_Figure_in_Gr_biped_Animation_mage_soell_cast_4_withSkin.glb"
+    },
+    {
+      "id": "spell-cast-5",
+      "label": "Mage Spell Cast 5",
+      "type": "animation",
+      "url": "/assets/characters/hero/Meshy_AI_Athletic_Figure_in_Gr_biped/Meshy_AI_Athletic_Figure_in_Gr_biped_Animation_mage_soell_cast_5_withSkin.glb"
+    },
+    {
+      "id": "spell-cast-6",
+      "label": "Mage Spell Cast 6",
+      "type": "animation",
+      "url": "/assets/characters/hero/Meshy_AI_Athletic_Figure_in_Gr_biped/Meshy_AI_Athletic_Figure_in_Gr_biped_Animation_mage_soell_cast_6_withSkin.glb"
+    },
+    {
+      "id": "spell-cast-7",
+      "label": "Mage Spell Cast 7",
+      "type": "animation",
+      "url": "/assets/characters/hero/Meshy_AI_Athletic_Figure_in_Gr_biped/Meshy_AI_Athletic_Figure_in_Gr_biped_Animation_mage_soell_cast_7_withSkin.glb"
+    },
+    {
+      "id": "spell-cast-8",
+      "label": "Mage Spell Cast 8",
+      "type": "animation",
+      "url": "/assets/characters/hero/Meshy_AI_Athletic_Figure_in_Gr_biped/Meshy_AI_Athletic_Figure_in_Gr_biped_Animation_mage_soell_cast_8_withSkin.glb"
+    }
+  ]
+}

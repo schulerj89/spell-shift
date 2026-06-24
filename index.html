@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spell Shift Character Test Lab</title>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="character-lab"></canvas>
+      <aside id="debug-panel" aria-label="Character Test Lab controls">
+        <header>
+          <p class="eyebrow">Spell Shift</p>
+          <h1>Character Test Lab</h1>
+          <p id="load-status">Loading hero asset...</p>
+        </header>
+
+        <section>
+          <h2>Animation</h2>
+          <p class="current">Current: <span id="current-animation">None</span></p>
+          <div id="animation-buttons" class="button-list"></div>
+        </section>
+
+        <section>
+          <h2>Debug</h2>
+          <label><input id="toggle-skeleton" type="checkbox" /> Skeleton</label>
+          <label><input id="toggle-bounds" type="checkbox" checked /> Bounds</label>
+          <label><input id="toggle-grid" type="checkbox" checked /> Grid</label>
+          <label><input id="toggle-axes" type="checkbox" /> Axes</label>
+          <label><input id="toggle-follow-camera" type="checkbox" checked /> Follow camera</label>
+        </section>
+
+        <section>
+          <h2>Movement</h2>
+          <p>WASD or arrow keys move. Space jumps when a jump clip is available. Number keys play clips.</p>
+        </section>
+      </aside>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
