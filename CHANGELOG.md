@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.12 - 2026-06-24
+
+- Replaced the hero idle source spritesheet with the newly provided bounce-idle character sheet.
+- Regenerated the transparent hero spritesheet from the updated source JPG.
+- Refreshed the Playwright still image and idle-loop video captures for reviewing the updated idle bounce.
+
 ## 0.1.11 - 2026-06-24
 
 - Added `scripts/make-sprite-transparent.ps1` to sample the JPG frame-edge background color and generate a transparent PNG spritesheet.
