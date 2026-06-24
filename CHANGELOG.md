@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.10 - 2026-06-24
+
+- Updated the sprite playground to preview only the idle animation with no player movement input.
+- Added runtime near-white edge background removal for the JPG hero spritesheet so frames render transparently over the level art.
+- Refreshed the Playwright idle capture and added a still transparency check artifact.
+
 ## 0.1.9 - 2026-06-24
 
 - Switched the sprite playground to use `hero-sprite-sheet.jpg` as the character spritesheet with explicit `320x320` frames.

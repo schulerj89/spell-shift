@@ -18,17 +18,7 @@ if (fs.existsSync("artifacts/sprite-sheet-idle-check.mp4")) {
   const video = page.video();
 
   await page.goto("http://127.0.0.1:4173", { waitUntil: "networkidle" });
-  await page.waitForTimeout(1400);
-
-  await page.keyboard.down("ArrowRight");
-  await page.waitForTimeout(900);
-  await page.keyboard.up("ArrowRight");
-
-  await page.keyboard.down("ArrowLeft");
-  await page.waitForTimeout(900);
-  await page.keyboard.up("ArrowLeft");
-
-  await page.waitForTimeout(700);
+  await page.waitForTimeout(4200);
 
   await page.close();
   await context.close();
