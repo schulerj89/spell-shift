@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.16 - 2026-06-24
+
+- Set the default idle loop to frames `0, 1, 2, 3, 4, 7`.
+- Set the default idle playback speed to `12 fps`.
+- Added a `Default` preset button to restore the preferred frame loop and FPS after testing alternates.
+- Refreshed the Playwright idle video capture with the preferred default loop.
+
 ## 0.1.15 - 2026-06-24
 
 - Added per-frame `Use` checkboxes so the idle loop can include or exclude individual frames.

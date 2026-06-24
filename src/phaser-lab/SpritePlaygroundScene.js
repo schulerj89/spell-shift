@@ -17,6 +17,9 @@ const SPRITE_SETS = [
   }
 ];
 
+const DEFAULT_IDLE_FRAME_INDEXES = [0, 1, 2, 3, 4, 7];
+const DEFAULT_IDLE_FPS = 12;
+
 const LEVEL_BACKGROUND = {
   key: "level-background",
   path: "/assets/sprites/hero-sprite-sheet-alt.jpg"
@@ -49,10 +52,10 @@ export class SpritePlaygroundScene extends Phaser.Scene {
     this.hasIdle = false;
     this.hasWalk = false;
     this.isPlaying = true;
-    this.frameRate = 6;
+    this.frameRate = DEFAULT_IDLE_FPS;
     this.currentFrameIndex = 0;
     this.frameCount = 0;
-    this.activeFrameIndexes = this.playerConfig.frames.map((_frame, index) => index);
+    this.activeFrameIndexes = DEFAULT_IDLE_FRAME_INDEXES;
   }
 
   preload() {
@@ -387,6 +390,18 @@ export class SpritePlaygroundScene extends Phaser.Scene {
     const utilityControls = document.createElement("div");
     utilityControls.className = "inspector-controls compact";
 
+    const defaultButton = document.createElement("button");
+    defaultButton.type = "button";
+    defaultButton.textContent = "Default";
+    defaultButton.addEventListener("click", () => {
+      this.activeFrameIndexes = DEFAULT_IDLE_FRAME_INDEXES;
+      this.frameRate = DEFAULT_IDLE_FPS;
+      fpsSlider.value = String(DEFAULT_IDLE_FPS);
+      fpsReadout.textContent = String(DEFAULT_IDLE_FPS);
+      this.syncFrameToggles();
+      this.rebuildIdleAnimation();
+    });
+
     const allButton = document.createElement("button");
     allButton.type = "button";
     allButton.textContent = "All";
@@ -412,7 +427,7 @@ export class SpritePlaygroundScene extends Phaser.Scene {
       this.rebuildIdleAnimation();
     });
 
-    utilityControls.append(allButton, oddEvenButton, clearButton);
+    utilityControls.append(defaultButton, allButton, oddEvenButton, clearButton);
 
     this.inspector.append(controls, frameRow, fpsRow, this.loopReadout, utilityControls, strip);
     this.hud.appendChild(this.inspector);
