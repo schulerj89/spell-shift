@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.6 - 2026-06-24
+
+- Updated the Phaser playground bootstrap to finish the 3D-to-2D conversion cleanup.
+- Fixed playground HTML status message and load error reporting for sprite assets.
+- Kept collision behavior focused on wall/object boundaries only, with a focused level layout.
+
+## 0.1.5 - 2026-06-24
+
+- Replaced the Three.js character test lab with a Phaser 2D sprite playground.
+- Removed 3D pipeline assets, manifests, and character lab scenes.
+- Added a top-down level playground with floor and wall collision using Arcade physics.
+- Added playable character sprite from provided sprite sheet and WASD/arrow movement.
+
 ## 0.1.4 - 2026-06-23
 
 - Added separate run-jump tuning controls for obstacle-jump delay, force, gravity, forward speed, and airborne foot lift.

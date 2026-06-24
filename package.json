@@ -1,7 +1,7 @@
 {
   "name": "spell-shift",
   "private": true,
-  "version": "0.1.4",
+  "version": "0.1.6",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "three": "^0.166.1"
+    "phaser": "^3.89.0"
   },
   "devDependencies": {
     "vite": "^8.1.0"

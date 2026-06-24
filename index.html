@@ -6,119 +6,13 @@
     <title>Spell Shift Character Test Lab</title>
   </head>
   <body>
-    <div id="app">
-      <canvas id="character-lab"></canvas>
-      <aside id="debug-panel" aria-label="Character Test Lab controls">
-        <header>
-          <p class="eyebrow">Spell Shift</p>
-          <h1>Character Test Lab</h1>
-          <p id="load-status">Loading hero asset...</p>
-        </header>
-
-        <section>
-          <h2>Animation</h2>
-          <p class="current">Current: <span id="current-animation">None</span></p>
-          <div id="animation-buttons" class="button-list"></div>
-        </section>
-
-        <section>
-          <h2>Accessories</h2>
-          <div id="accessory-controls" class="toggle-list"></div>
-        </section>
-
-        <section>
-          <h2>Debug</h2>
-          <label><input id="toggle-skeleton" type="checkbox" /> Skeleton</label>
-          <label><input id="toggle-bounds" type="checkbox" checked /> Bounds</label>
-          <label><input id="toggle-grid" type="checkbox" checked /> Grid</label>
-          <label><input id="toggle-axes" type="checkbox" /> Axes</label>
-          <label><input id="toggle-follow-camera" type="checkbox" checked /> Follow camera</label>
-        </section>
-
-        <section>
-          <h2>Camera</h2>
-          <label class="range-control">
-            Distance <span id="camera-distance-value">4.8</span>
-            <input id="camera-distance" type="range" min="2.5" max="9" step="0.1" value="4.8" />
-          </label>
-          <label class="range-control">
-            Height <span id="camera-height-value">2.3</span>
-            <input id="camera-height" type="range" min="0.7" max="5" step="0.1" value="2.3" />
-          </label>
-          <label class="range-control">
-            Target <span id="camera-target-value">1.1</span>
-            <input id="camera-target" type="range" min="0.2" max="2.4" step="0.1" value="1.1" />
-          </label>
-          <label class="range-control">
-            Side <span id="camera-side-value">0.0</span>
-            <input id="camera-side" type="range" min="-2.5" max="2.5" step="0.1" value="0" />
-          </label>
-          <button id="reset-follow-camera" class="secondary-button" type="button">Reset behind character</button>
-        </section>
-
-        <section>
-          <h2>Jump</h2>
-          <label><input id="toggle-jump-hitbox" type="checkbox" checked /> Jump hitbox</label>
-          <label class="range-control">
-            Launch delay <span id="jump-delay-value">0ms</span>
-            <input id="jump-delay" type="range" min="0" max="800" step="25" value="0" />
-          </label>
-          <label class="range-control">
-            Force <span id="jump-force-value">4.8</span>
-            <input id="jump-force" type="range" min="2" max="9" step="0.1" value="4.8" />
-          </label>
-          <label class="range-control">
-            Gravity <span id="jump-gravity-value">13.0</span>
-            <input id="jump-gravity" type="range" min="4" max="28" step="0.5" value="13" />
-          </label>
-          <label class="range-control">
-            Radius <span id="jump-radius-value">0.35</span>
-            <input id="jump-radius" type="range" min="0.15" max="1" step="0.05" value="0.35" />
-          </label>
-          <label class="range-control">
-            Height <span id="jump-height-value">1.70</span>
-            <input id="jump-height" type="range" min="0.8" max="3" step="0.05" value="1.7" />
-          </label>
-          <label class="range-control">
-            Ground offset <span id="jump-ground-value">0.00</span>
-            <input id="jump-ground" type="range" min="-0.4" max="0.5" step="0.05" value="0" />
-          </label>
-          <label class="range-control">
-            Air foot lift <span id="jump-air-foot-lift-value">0.00</span>
-            <input id="jump-air-foot-lift" type="range" min="0" max="1.2" step="0.05" value="0" />
-          </label>
-        </section>
-
-        <section>
-          <h2>Run Jump</h2>
-          <label class="range-control">
-            Launch delay <span id="run-jump-delay-value">0ms</span>
-            <input id="run-jump-delay" type="range" min="0" max="800" step="25" value="0" />
-          </label>
-          <label class="range-control">
-            Force <span id="run-jump-force-value">3.8</span>
-            <input id="run-jump-force" type="range" min="1" max="9" step="0.1" value="3.8" />
-          </label>
-          <label class="range-control">
-            Gravity <span id="run-jump-gravity-value">18.0</span>
-            <input id="run-jump-gravity" type="range" min="4" max="36" step="0.5" value="18" />
-          </label>
-          <label class="range-control">
-            Forward speed <span id="run-jump-forward-speed-value">4.5</span>
-            <input id="run-jump-forward-speed" type="range" min="0" max="10" step="0.1" value="4.5" />
-          </label>
-          <label class="range-control">
-            Air foot lift <span id="run-jump-air-foot-lift-value">0.40</span>
-            <input id="run-jump-air-foot-lift" type="range" min="0" max="1.2" step="0.05" value="0.4" />
-          </label>
-        </section>
-
-        <section>
-          <h2>Movement</h2>
-          <p>WASD or arrow keys move. Hold left click to look around. Space uses Regular Jump while still and Jump Over Obstacle while moving. Number keys play clips.</p>
-        </section>
-      </aside>
-    </div>
+    <div id="app"></div>
+    <aside id="playground-hud" aria-label="Playground controls">
+      <p class="title">Spell Shift Sprite Playground</p>
+      <p>Move with WASD or arrow keys. Camera follows the player.</p>
+      <p>Collision is currently enabled for the perimeter and wall blocks only.</p>
+      <a class="status" id="status">Loading player sprite...</a>
+    </aside>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

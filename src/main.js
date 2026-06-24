@@ -1,9 +1,27 @@
 import "./styles.css";
-import { CharacterLabScene } from "./character-lab/CharacterLabScene.js";
+import Phaser from "phaser";
+import { SpritePlaygroundScene } from "./phaser-lab/SpritePlaygroundScene.js";
 
-const canvas = document.querySelector("#character-lab");
-const lab = new CharacterLabScene(canvas);
+const game = new Phaser.Game({
+  type: Phaser.AUTO,
+  parent: "app",
+  width: window.innerWidth,
+  height: window.innerHeight,
+  backgroundColor: "#151817",
+  physics: {
+    default: "arcade",
+    arcade: {
+      gravity: { x: 0, y: 0 },
+      debug: false
+    }
+  },
+  scale: {
+    mode: Phaser.Scale.RESIZE,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  },
+  scene: [SpritePlaygroundScene]
+});
 
-lab.start().catch((error) => {
-  console.error("[CharacterTestLab] Failed to start scene", error);
+window.addEventListener("resize", () => {
+  game.scale.resize(window.innerWidth, window.innerHeight);
 });
