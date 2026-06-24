@@ -15,7 +15,8 @@ const DEFAULT_JUMP_SETTINGS = {
   gravity: 13,
   radius: 0.35,
   height: 1.7,
-  groundOffset: 0
+  groundOffset: 0,
+  airFootLift: 0
 };
 const MOVE_SPEED = 2.8;
 const TURN_SPEED = 12;
@@ -238,6 +239,10 @@ export class CharacterLabScene {
         }
         this.updateJumpHitbox();
       }
+    });
+    this.bindRange("#jump-air-foot-lift", "#jump-air-foot-lift-value", this.jumpSettings, "airFootLift", {
+      decimals: 2,
+      onInput: () => this.updateJumpHitbox()
     });
   }
 
@@ -539,9 +544,13 @@ export class CharacterLabScene {
 
     this.helpers.jumpHitbox.position.set(
       this.hero.root.position.x,
-      this.hero.root.position.y + this.jumpSettings.height * 0.5,
+      this.hero.root.position.y + this.getActiveJumpHitboxFloorOffset() + this.jumpSettings.height * 0.5,
       this.hero.root.position.z
     );
+  }
+
+  getActiveJumpHitboxFloorOffset() {
+    return this.isGrounded ? 0 : this.jumpSettings.airFootLift;
   }
 
   resize() {
