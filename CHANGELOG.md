@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.8 - 2026-06-24
+
+- Corrected the sprite-sheet bootstrap for the sprite playground so the idle candidate is loaded as a 4x4 grid and validated with explicit frame-size logging.
+- Added HUD text for active sheet frame dimensions (cols/rows and pixel frame size) to make sprite-sheet slicing easier to verify without changing code.
+- Kept Playwright capture workflow wired to the sprite-sheet validation path and updated recording artifacts.
+
 ## 0.1.7 - 2026-06-24
 
 - Added support for both provided sprite sheets in the playground and added quick sheet swapping (1/2 or [ ] keys) to test idle-only vs. movement sheets.

@@ -3,17 +3,21 @@ import Phaser from "phaser";
 const SPRITE_SHEETS = [
   {
     key: "hero-sheet-walk",
+    imageKey: "hero-sheet-walk-image",
     path: "/assets/sprites/hero-sprite-sheet.jpg",
     frameWidth: 128,
     frameHeight: 128,
-    label: "Walk/Action sheet"
+    label: "Walk/Action sheet (128x128)"
   },
   {
     key: "hero-sheet-idle",
+    imageKey: "hero-sheet-idle-image",
     path: "/assets/sprites/hero-sprite-sheet-alt.jpg",
-    frameWidth: 80,
-    frameHeight: 80,
-    label: "Idle-only candidate"
+    frameCols: 4,
+    frameRows: 4,
+    frameWidth: 0,
+    frameHeight: 0,
+    label: "Idle candidate (4x4)"
   }
 ];
 
@@ -42,10 +46,7 @@ export class SpritePlaygroundScene extends Phaser.Scene {
 
   preload() {
     SPRITE_SHEETS.forEach((cfg) => {
-      this.load.spritesheet(cfg.key, cfg.path, {
-        frameWidth: cfg.frameWidth,
-        frameHeight: cfg.frameHeight
-      });
+      this.load.image(cfg.imageKey, cfg.path);
     });
 
     this.load.on("loaderror", () => {
@@ -65,13 +66,15 @@ export class SpritePlaygroundScene extends Phaser.Scene {
       status.textContent = "Loading sprite sheets and building playground.";
     }
 
-    this.add.rectangle(
-      PLAYGROUND_CONFIG.mapWidth / 2,
-      PLAYGROUND_CONFIG.mapHeight / 2,
-      PLAYGROUND_CONFIG.mapWidth,
-      PLAYGROUND_CONFIG.mapHeight,
-      PLAYGROUND_CONFIG.tileColor
-    ).setStrokeStyle(2, 0x44586b);
+    this.add
+      .rectangle(
+        PLAYGROUND_CONFIG.mapWidth / 2,
+        PLAYGROUND_CONFIG.mapHeight / 2,
+        PLAYGROUND_CONFIG.mapWidth,
+        PLAYGROUND_CONFIG.mapHeight,
+        PLAYGROUND_CONFIG.tileColor
+      )
+      .setStrokeStyle(2, 0x44586b);
 
     this.physics.world.setBounds(0, 0, PLAYGROUND_CONFIG.mapWidth, PLAYGROUND_CONFIG.mapHeight);
     this.physics.world.setBoundsCollision(true, true, true, true);
@@ -79,6 +82,8 @@ export class SpritePlaygroundScene extends Phaser.Scene {
 
     this.wallGroup = this.physics.add.staticGroup();
     this.groundGroup = this.physics.add.staticGroup();
+
+    this.bootstrapSpriteSheets();
     this.createFloor();
     this.createWalls();
 
@@ -90,9 +95,9 @@ export class SpritePlaygroundScene extends Phaser.Scene {
     this.player.setOrigin(0.5, 0.75);
     this.player.setCollideWorldBounds(true);
     this.player.setDisplaySize(84, 84);
-    this.player.body.setSize(this.playerConfig.frameWidth * 0.45, this.playerConfig.frameHeight * 0.65);
+    this.player.body.setSize(this.playerConfig._frameWidth * 0.45, this.playerConfig._frameHeight * 0.65);
     this.player.body.setOffset(
-      (this.player.width - this.playerConfig.frameWidth * 0.45) / 2,
+      (this.player.width - this.playerConfig._frameWidth * 0.45) / 2,
       this.player.height * 0.6
     );
     this.physics.add.collider(this.player, this.wallGroup);
@@ -122,6 +127,83 @@ export class SpritePlaygroundScene extends Phaser.Scene {
     if (status) {
       status.textContent = "Sprite playground loaded. Press WASD/arrow to move. 1/2 or [/] swap sprite sheet.";
     }
+  }
+
+  resolveSheetGrid(cfg) {
+    const sourceTexture = this.textures.get(cfg.imageKey);
+    const sourceImage = sourceTexture?.source?.[0];
+    const imageWidth = sourceImage?.width ?? 0;
+    const imageHeight = sourceImage?.height ?? 0;
+
+    if (imageWidth === 0 || imageHeight === 0) {
+      return null;
+    }
+
+    const frameWidth = cfg.frameWidth > 0 ? cfg.frameWidth : imageWidth / Math.max(1, cfg.frameCols);
+    const frameHeight = cfg.frameHeight > 0 ? cfg.frameHeight : imageHeight / Math.max(1, cfg.frameRows);
+
+    if (!Number.isInteger(frameWidth) || !Number.isInteger(frameHeight)) {
+      console.warn(
+        `[sprite-sheet] ${cfg.label} has non-integer frame size from layout ${cfg.frameCols ?? 1}x${
+          cfg.frameRows ?? 1
+        } on ${imageWidth}x${imageHeight}.`
+      );
+    }
+
+    if (cfg.frameWidth > 0 || cfg.frameHeight > 0) {
+      console.log(`[sprite-sheet] ${cfg.label} uses explicit frame size ${frameWidth}x${frameHeight}`);
+    } else {
+      console.log(
+        `[sprite-sheet] ${cfg.label} resolved to ${Math.floor(imageWidth / frameWidth)}x${Math.floor(
+          imageHeight / frameHeight
+        )} from ${cfg.frameCols ?? "auto"}x${cfg.frameRows ?? "auto"}`
+      );
+    }
+
+    const resolvedCols = Math.max(1, Math.floor(imageWidth / frameWidth));
+    const resolvedRows = Math.max(1, Math.floor(imageHeight / frameHeight));
+
+    return {
+      frameWidth: Math.floor(frameWidth),
+      frameHeight: Math.floor(frameHeight),
+      sourceWidth: imageWidth,
+      sourceHeight: imageHeight,
+      resolvedCols,
+      resolvedRows
+    };
+  }
+
+  bootstrapSpriteSheets() {
+    SPRITE_SHEETS.forEach((cfg) => {
+      const sourceTexture = this.textures.get(cfg.imageKey);
+      const layout = this.resolveSheetGrid(cfg);
+
+      if (!sourceTexture || !layout) {
+        return;
+      }
+
+      const created = this.textures.addSpriteSheet(cfg.key, sourceTexture, {
+        frameWidth: layout.frameWidth,
+        frameHeight: layout.frameHeight
+      });
+
+      if (!created) {
+        console.error(`[sprite-sheet] Failed to create sprite sheet for ${cfg.key}`);
+        return;
+      }
+
+      cfg._frameWidth = layout.frameWidth;
+      cfg._frameHeight = layout.frameHeight;
+      cfg._frameColumns = Math.max(1, Math.floor(layout.sourceWidth / layout.frameWidth));
+      cfg._frameRows = Math.max(1, Math.floor(layout.sourceHeight / layout.frameHeight));
+      cfg._frameCount = Math.max(0, created.frameTotal);
+
+      console.log(
+        `[sprite-sheet] ${cfg.label}: ${cfg._frameColumns}x${cfg._frameRows}, frame=${cfg._frameWidth}x${cfg._frameHeight}, total=${cfg._frameCount}`
+      );
+
+      this.textures.remove(cfg.imageKey);
+    });
   }
 
   createFloor() {
@@ -185,13 +267,10 @@ export class SpritePlaygroundScene extends Phaser.Scene {
     if (this.hasWalk && !this.anims.exists(walkKey)) {
       this.anims.create({
         key: walkKey,
-        frames: this.anims.generateFrameNumbers(
-          config.key,
-          {
-            start: 4,
-            end: Math.min(frameCount - 1, 11)
-          }
-        ),
+        frames: this.anims.generateFrameNumbers(config.key, {
+          start: Math.min(4, frameCount - 1),
+          end: Math.min(frameCount - 1, Math.max(4, Math.min(11, frameCount - 1)))
+        }),
         frameRate: 10,
         repeat: -1,
         skipMissedFrames: true
@@ -216,11 +295,11 @@ export class SpritePlaygroundScene extends Phaser.Scene {
     this.setupAnimations(this.playerConfig);
     this.player.setTexture(this.playerConfig.key);
     this.player.body.setSize(
-      this.playerConfig.frameWidth * 0.45,
-      this.playerConfig.frameHeight * 0.65
+      this.playerConfig._frameWidth * 0.45,
+      this.playerConfig._frameHeight * 0.65
     );
     this.player.body.setOffset(
-      (this.player.width - this.playerConfig.frameWidth * 0.45) / 2,
+      (this.player.width - this.playerConfig._frameWidth * 0.45) / 2,
       this.player.height * 0.6
     );
     this.player.setDisplaySize(84, 84);
@@ -230,6 +309,11 @@ export class SpritePlaygroundScene extends Phaser.Scene {
     this.currentlyActiveWalkAnim = `walk-${this.playerConfig.key}`;
     this.currentlyActiveIdleAnim = `idle-${this.playerConfig.key}`;
     this.applyCurrentSheetMessage();
+
+    const status = document.querySelector("#status");
+    if (status) {
+      status.textContent = `Switched to ${this.playerConfig.label}`;
+    }
   }
 
   applyCurrentSheetMessage() {
@@ -241,7 +325,9 @@ export class SpritePlaygroundScene extends Phaser.Scene {
       }
     }
 
-    this.currentSheetText.textContent = `Sprite: ${this.playerConfig.label}. Use 1/2 or [/] to switch.`;
+    this.currentSheetText.textContent = `Sprite: ${
+      this.playerConfig.label
+    } (${this.playerConfig._frameColumns || "?"}x${this.playerConfig._frameRows || "?"}, ${this.playerConfig._frameWidth || "?"}x${this.playerConfig._frameHeight || "?"} px). Use 1/2 or [/] to switch.`;
   }
 
   update() {
