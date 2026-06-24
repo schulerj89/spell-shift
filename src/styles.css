@@ -103,7 +103,8 @@ p {
   margin-bottom: 10px;
 }
 
-.button-list {
+.button-list,
+.toggle-list {
   display: grid;
   gap: 8px;
 }

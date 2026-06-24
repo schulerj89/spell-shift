@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { HeroCharacter } from "./HeroCharacter.js";
 import { InputController } from "./InputController.js";
+import { heroAccessoryManifest } from "../data/heroAccessoryManifest.js";
 
 const DEFAULT_CAMERA_SETTINGS = {
   distance: 4.8,
@@ -84,6 +85,7 @@ export class CharacterLabScene {
 
     this.statusEl = document.querySelector("#load-status");
     this.animationButtonsEl = document.querySelector("#animation-buttons");
+    this.accessoryControlsEl = document.querySelector("#accessory-controls");
     this.currentAnimationEl = document.querySelector("#current-animation");
     this.visualBounds = new THREE.Box3();
     this.visualCenter = new THREE.Vector3();
@@ -118,6 +120,7 @@ export class CharacterLabScene {
     await this.hero.load();
     this.scene.add(this.hero.root);
     this.createCharacterHelpers();
+    this.renderAccessoryControls();
     this.controls.target.copy(this.hero.root.position).add(new THREE.Vector3(0, 1, 0));
 
     window.addEventListener("resize", this.boundResize);
@@ -375,6 +378,35 @@ export class CharacterLabScene {
       button.textContent = `${index + 1}. ${clip.label}`;
       button.addEventListener("click", () => this.hero.playPreviewAnimation(clip.id));
       this.animationButtonsEl.append(button);
+    });
+  }
+
+  renderAccessoryControls() {
+    if (!this.accessoryControlsEl || !this.hero) return;
+
+    this.accessoryControlsEl.innerHTML = "";
+    heroAccessoryManifest.accessories.forEach((accessory) => {
+      const label = document.createElement("label");
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.addEventListener("change", async () => {
+        input.disabled = true;
+        this.setStatus(`${input.checked ? "Equipping" : "Removing"} ${accessory.label}...`);
+
+        try {
+          await this.hero.setAccessoryEnabled(accessory, input.checked);
+          this.setStatus(`${accessory.label} ${input.checked ? "equipped" : "removed"}.`);
+        } catch (error) {
+          input.checked = false;
+          console.error(`[CharacterTestLab] Failed to toggle accessory "${accessory.label}"`, error);
+          this.setStatus(`Failed to load ${accessory.label}.`);
+        } finally {
+          input.disabled = false;
+        }
+      });
+
+      label.append(input, document.createTextNode(` ${accessory.label}`));
+      this.accessoryControlsEl.append(label);
     });
   }
 

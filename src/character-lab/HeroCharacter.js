@@ -9,12 +9,16 @@ export class HeroCharacter {
     this.loader = new GLTFLoader(loadingManager);
     this.root = new THREE.Group();
     this.root.name = "HeroRoot";
+    this.accessoryRoot = new THREE.Group();
+    this.accessoryRoot.name = "HeroAccessoryRoot";
+    this.root.add(this.accessoryRoot);
     this.mixer = null;
     this.actions = new Map();
     this.clips = [];
     this.currentAction = null;
     this.currentAnimationId = null;
     this.baseScene = null;
+    this.accessories = new Map();
     this.motionLocked = false;
     this.manualPreview = false;
     this.handBone = null;
@@ -69,8 +73,80 @@ export class HeroCharacter {
     return this.loader.loadAsync(asset.url);
   }
 
-  async attachClothingPiece(_gearAsset) {
-    console.info("[CharacterTestLab] Outfit swapping placeholder: attachClothingPiece");
+  async attachClothingPiece(accessoryAsset) {
+    return this.setAccessoryEnabled(accessoryAsset, true);
+  }
+
+  async setAccessoryEnabled(accessoryAsset, enabled) {
+    let accessory = this.accessories.get(accessoryAsset.id);
+
+    if (!accessory && enabled) {
+      accessory = await this.loadAccessory(accessoryAsset);
+      this.accessories.set(accessoryAsset.id, accessory);
+      this.accessoryRoot.add(accessory.group);
+    }
+
+    if (accessory) {
+      accessory.group.visible = enabled;
+      console.info(`[CharacterTestLab] ${enabled ? "Enabled" : "Disabled"} accessory "${accessoryAsset.label}"`);
+    }
+  }
+
+  async loadAccessory(accessoryAsset) {
+    const gltf = await this.loader.loadAsync(accessoryAsset.url);
+    const group =
+      accessoryAsset.type === "mirrored-pair"
+        ? this.createMirroredAccessoryPair(gltf.scene, accessoryAsset)
+        : this.createFittedAccessory(gltf.scene, accessoryAsset);
+
+    group.name = `Accessory_${accessoryAsset.id}`;
+    group.visible = false;
+    this.logAccessoryModel(accessoryAsset, group);
+
+    return { asset: accessoryAsset, group };
+  }
+
+  createMirroredAccessoryPair(scene, accessoryAsset) {
+    const pairOffsetX = accessoryAsset.fit?.pairOffsetX ?? 0.16;
+    const right = this.createFittedAccessory(scene, accessoryAsset);
+    right.name = `${accessoryAsset.id}_right`;
+    right.position.x += pairOffsetX;
+
+    const left = right.clone(true);
+    left.name = `${accessoryAsset.id}_left_mirrored`;
+    left.position.x = -pairOffsetX;
+    left.scale.x *= -1;
+
+    const pair = new THREE.Group();
+    pair.name = `${accessoryAsset.id}_pair`;
+    pair.add(right, left);
+    return pair;
+  }
+
+  createFittedAccessory(scene, accessoryAsset) {
+    const group = scene.clone(true);
+    const fit = accessoryAsset.fit ?? {};
+    const targetCenter = new THREE.Vector3(...(fit.center ?? [0, 0, 0]));
+    const box = new THREE.Box3().setFromObject(group);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    const scale = fit.targetHeight && size.y > 0 ? fit.targetHeight / size.y : 1;
+
+    group.scale.setScalar(scale);
+    group.position.set(
+      targetCenter.x - center.x * scale,
+      targetCenter.y - center.y * scale,
+      targetCenter.z - center.z * scale
+    );
+
+    group.traverse((object) => {
+      if (object.isMesh) {
+        object.castShadow = true;
+        object.receiveShadow = true;
+      }
+    });
+
+    return group;
   }
 
   attachWandToHandBone(wandObject) {
@@ -264,6 +340,26 @@ export class HeroCharacter {
       "Base animation clips",
       gltf.animations.map((clip) => clip.name || "(unnamed)")
     );
+    console.groupEnd();
+  }
+
+  logAccessoryModel(accessoryAsset, group) {
+    const meshes = [];
+    const materials = new Set();
+    const box = new THREE.Box3().setFromObject(group);
+    const size = box.getSize(new THREE.Vector3());
+
+    group.traverse((object) => {
+      if (!object.isMesh) return;
+      meshes.push(object.name || "(unnamed mesh)");
+      const meshMaterials = Array.isArray(object.material) ? object.material : [object.material];
+      meshMaterials.filter(Boolean).forEach((material) => materials.add(material.name || material.type));
+    });
+
+    console.group(`[CharacterTestLab] Accessory loaded: ${accessoryAsset.label}`);
+    console.info("Meshes", meshes);
+    console.info("Materials", [...materials]);
+    console.info("Fitted size", size.toArray());
     console.groupEnd();
   }
 
