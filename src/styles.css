@@ -32,6 +32,9 @@ body {
   border: 1px solid rgba(236, 235, 230, 0.22);
   background: rgba(19, 24, 27, 0.9);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  width: min(380px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
 }
 
 .title {
@@ -56,4 +59,79 @@ body {
 .hint {
   margin-top: 10px;
   color: #b8d2f6;
+}
+
+.animation-inspector {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(236, 235, 230, 0.18);
+}
+
+.inspector-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.inspector-controls button,
+.frame-thumb {
+  min-height: 34px;
+  border: 1px solid rgba(236, 235, 230, 0.28);
+  border-radius: 6px;
+  color: #ecebe6;
+  background: rgba(255, 255, 255, 0.08);
+  font: inherit;
+  cursor: pointer;
+}
+
+.inspector-controls button:hover,
+.frame-thumb:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.inspector-row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 54px;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  font-size: 0.82rem;
+  color: #d4d2cb;
+}
+
+.inspector-row input[type="range"] {
+  width: 100%;
+}
+
+.frame-readout {
+  color: #8ec3f2;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.frame-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 64px);
+  gap: 8px;
+  justify-content: start;
+  margin-top: 10px;
+}
+
+.frame-thumb {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  overflow: hidden;
+  color: #ffffff;
+  text-align: left;
+  text-shadow: 0 1px 2px #000000;
+  background-color: rgba(255, 255, 255, 0.08);
+  background-repeat: no-repeat;
+  image-rendering: auto;
+}
+
+.frame-thumb.active {
+  border-color: #8ec3f2;
+  box-shadow: 0 0 0 2px rgba(142, 195, 242, 0.28);
 }

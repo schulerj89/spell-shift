@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.13 - 2026-06-24
+
+- Added an in-page sprite animation inspector with play/pause, previous/next frame controls, a frame scrubber, and FPS adjustment.
+- Added clickable frame thumbnails for inspecting each idle frame directly.
+- Updated Playwright verification and capture artifacts to show the new animation inspector panel.
+
 ## 0.1.12 - 2026-06-24
 
 - Replaced the hero idle source spritesheet with the newly provided bounce-idle character sheet.
