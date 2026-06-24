@@ -8,6 +8,9 @@ const MOVE_SPEED = 2.8;
 const TURN_SPEED = 12;
 const JUMP_SPEED = 4.8;
 const GRAVITY = 13;
+const LOOK_SENSITIVITY = 0.005;
+const MIN_CAMERA_PITCH = 0.12;
+const MAX_CAMERA_PITCH = 0.95;
 
 export class CharacterLabScene {
   constructor(canvas) {
@@ -36,6 +39,9 @@ export class CharacterLabScene {
     this.input = new InputController();
     this.hero = null;
     this.followCamera = true;
+    this.followCameraYaw = 0;
+    this.followCameraPitch = Math.atan2(CAMERA_FOLLOW_OFFSET.y, CAMERA_FOLLOW_OFFSET.z);
+    this.isPointerLooking = false;
     this.verticalVelocity = 0;
     this.isGrounded = true;
     this.animationFrameId = null;
@@ -53,6 +59,9 @@ export class CharacterLabScene {
 
     this.boundAnimate = this.animate.bind(this);
     this.boundResize = this.resize.bind(this);
+    this.boundPointerDown = this.handlePointerDown.bind(this);
+    this.boundPointerMove = this.handlePointerMove.bind(this);
+    this.boundPointerUp = this.handlePointerUp.bind(this);
   }
 
   async start() {
@@ -82,6 +91,10 @@ export class CharacterLabScene {
 
     window.addEventListener("resize", this.boundResize);
     window.addEventListener("keydown", (event) => this.handleAnimationShortcut(event));
+    this.canvas.addEventListener("pointerdown", this.boundPointerDown);
+    this.canvas.addEventListener("pointermove", this.boundPointerMove);
+    this.canvas.addEventListener("pointerup", this.boundPointerUp);
+    this.canvas.addEventListener("pointercancel", this.boundPointerUp);
 
     this.animate();
   }
@@ -153,6 +166,9 @@ export class CharacterLabScene {
     this.bindCheckbox("#toggle-follow-camera", (checked) => {
       this.followCamera = checked;
       this.controls.enabled = !checked;
+      if (checked) {
+        this.syncFollowAnglesFromCamera();
+      }
     });
 
     this.controls.enabled = !this.followCamera;
@@ -204,6 +220,34 @@ export class CharacterLabScene {
     const clip = this.hero.clips[index];
     if (clip) {
       this.hero.playPreviewAnimation(clip.id);
+    }
+  }
+
+  handlePointerDown(event) {
+    if (!this.followCamera || event.button !== 0) return;
+
+    this.isPointerLooking = true;
+    this.canvas.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  }
+
+  handlePointerMove(event) {
+    if (!this.isPointerLooking || !this.followCamera) return;
+
+    this.followCameraYaw -= event.movementX * LOOK_SENSITIVITY;
+    this.followCameraPitch = THREE.MathUtils.clamp(
+      this.followCameraPitch + event.movementY * LOOK_SENSITIVITY,
+      MIN_CAMERA_PITCH,
+      MAX_CAMERA_PITCH
+    );
+  }
+
+  handlePointerUp(event) {
+    if (!this.isPointerLooking) return;
+
+    this.isPointerLooking = false;
+    if (this.canvas.hasPointerCapture(event.pointerId)) {
+      this.canvas.releasePointerCapture(event.pointerId);
     }
   }
 
@@ -271,15 +315,33 @@ export class CharacterLabScene {
   updateCamera(delta) {
     if (!this.hero || !this.followCamera) return;
 
-    const desiredOffset = CAMERA_FOLLOW_OFFSET.clone().applyAxisAngle(
-      new THREE.Vector3(0, 1, 0),
-      this.hero.root.rotation.y
+    const followDistance = CAMERA_FOLLOW_OFFSET.length();
+    const horizontalDistance = Math.cos(this.followCameraPitch) * followDistance;
+    const desiredOffset = new THREE.Vector3(
+      Math.sin(this.followCameraYaw) * horizontalDistance,
+      Math.sin(this.followCameraPitch) * followDistance,
+      Math.cos(this.followCameraYaw) * horizontalDistance
     );
     const desiredPosition = this.hero.root.position.clone().add(desiredOffset);
     const desiredTarget = this.hero.root.position.clone().add(new THREE.Vector3(0, 1.05, 0));
 
     this.camera.position.lerp(desiredPosition, Math.min(1, delta * 5));
     this.controls.target.lerp(desiredTarget, Math.min(1, delta * 8));
+  }
+
+  syncFollowAnglesFromCamera() {
+    if (!this.hero) return;
+
+    const target = this.hero.root.position.clone().add(new THREE.Vector3(0, 1.05, 0));
+    const offset = this.camera.position.clone().sub(target);
+    const horizontalDistance = Math.hypot(offset.x, offset.z);
+
+    this.followCameraYaw = Math.atan2(offset.x, offset.z);
+    this.followCameraPitch = THREE.MathUtils.clamp(
+      Math.atan2(offset.y, horizontalDistance),
+      MIN_CAMERA_PITCH,
+      MAX_CAMERA_PITCH
+    );
   }
 
   resize() {
