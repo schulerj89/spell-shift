@@ -1,8 +1,15 @@
 # Changelog
 
+## 0.1.9 - 2026-06-24
+
+- Switched the sprite playground to use `hero-sprite-sheet.jpg` as the character spritesheet with explicit `320x320` frames.
+- Reclassified `hero-sprite-sheet-alt.jpg` as the level background instead of trying to slice it as a player animation sheet.
+- Updated the playground to show the level art behind the player and keep a bottom floor collider so the sprite remains grounded.
+- Refreshed the Playwright capture artifacts against the corrected spritesheet loader.
+
 ## 0.1.8 - 2026-06-24
 
-- Corrected the sprite-sheet bootstrap for the sprite playground so the idle candidate is loaded as a 4x4 grid and validated with explicit frame-size logging.
+- Corrected the sprite-sheet bootstrap for the sprite playground so the candidate sheet layout is validated with explicit frame-size logging.
 - Added HUD text for active sheet frame dimensions (cols/rows and pixel frame size) to make sprite-sheet slicing easier to verify without changing code.
 - Kept Playwright capture workflow wired to the sprite-sheet validation path and updated recording artifacts.
 
