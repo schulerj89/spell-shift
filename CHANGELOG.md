@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.15 - 2026-06-24
+
+- Added per-frame `Use` checkboxes so the idle loop can include or exclude individual frames.
+- Added quick loop presets for all frames, every-other frame, and first-frame-only testing.
+- Updated the animation inspector to show the active loop frame list and dim excluded thumbnails.
+- Refreshed Playwright screenshot and video captures to demonstrate selectable frame playback.
+
 ## 0.1.14 - 2026-06-24
 
 - Switched the idle animation to load the 8 individual PNG frames from `public/assets/sprites/frames/`.

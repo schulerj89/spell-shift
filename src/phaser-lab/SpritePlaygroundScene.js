@@ -42,14 +42,17 @@ export class SpritePlaygroundScene extends Phaser.Scene {
     this.inspector = null;
     this.frameSlider = null;
     this.frameReadout = null;
+    this.loopReadout = null;
     this.playButton = null;
     this.frameButtons = [];
+    this.frameToggles = [];
     this.hasIdle = false;
     this.hasWalk = false;
     this.isPlaying = true;
     this.frameRate = 6;
     this.currentFrameIndex = 0;
     this.frameCount = 0;
+    this.activeFrameIndexes = this.playerConfig.frames.map((_frame, index) => index);
   }
 
   preload() {
@@ -113,7 +116,8 @@ export class SpritePlaygroundScene extends Phaser.Scene {
     this.playIdleAnimation();
 
     this.player.on("animationupdate", (_animation, frame) => {
-      this.setInspectorFrame(frame.index, false);
+      const frameIndex = this.playerConfig.frames.findIndex((candidate) => candidate.key === frame.textureKey);
+      this.setInspectorFrame(frameIndex >= 0 ? frameIndex : 0, false);
     });
 
     this.cameras.main.setBounds(0, 0, PLAYGROUND_CONFIG.mapWidth, PLAYGROUND_CONFIG.mapHeight);
@@ -202,6 +206,7 @@ export class SpritePlaygroundScene extends Phaser.Scene {
 
   setupAnimations(config) {
     const frameCount = config.frames.length;
+    const activeFrames = this.getActiveFrames();
 
     this.hasIdle = frameCount > 0;
     this.hasWalk = false;
@@ -215,11 +220,38 @@ export class SpritePlaygroundScene extends Phaser.Scene {
 
     this.anims.create({
       key: idleKey,
-      frames: config.frames.map((frame) => ({ key: frame.key })),
+      frames: activeFrames.map((frameIndex) => ({ key: config.frames[frameIndex].key })),
       frameRate: this.frameRate,
       repeat: -1,
       skipMissedFrames: true
     });
+  }
+
+  getActiveFrames() {
+    if (this.activeFrameIndexes.length === 0) {
+      return [0];
+    }
+
+    return [...this.activeFrameIndexes].sort((a, b) => a - b);
+  }
+
+  rebuildIdleAnimation() {
+    const wasPlaying = this.isPlaying;
+
+    this.player.anims.stop();
+    this.setupAnimations(this.playerConfig);
+    this.updateLoopReadout();
+
+    if (!this.activeFrameIndexes.includes(this.currentFrameIndex)) {
+      this.showFrame(this.getActiveFrames()[0]);
+    }
+
+    if (wasPlaying) {
+      this.playIdleAnimation();
+    } else {
+      this.pauseIdleAnimation();
+      this.showFrame(this.currentFrameIndex);
+    }
   }
 
   applyCurrentSheetMessage() {
@@ -307,24 +339,24 @@ export class SpritePlaygroundScene extends Phaser.Scene {
     fpsSlider.addEventListener("input", () => {
       this.frameRate = Number(fpsSlider.value);
       fpsReadout.textContent = String(this.frameRate);
-      this.setupAnimations(this.playerConfig);
-      if (this.isPlaying) {
-        this.playIdleAnimation();
-      } else {
-        this.showFrame(this.currentFrameIndex);
-      }
+      this.rebuildIdleAnimation();
     });
 
     fpsRow.append(fpsSlider, fpsReadout);
+
+    this.loopReadout = document.createElement("p");
+    this.loopReadout.className = "loop-readout";
 
     const strip = document.createElement("div");
     strip.className = "frame-strip";
 
     this.frameButtons = Array.from({ length: this.frameCount }, (_unused, index) => {
+      const cell = document.createElement("div");
       const button = document.createElement("button");
-      const column = index % this.playerConfig._frameColumns;
-      const row = Math.floor(index / this.playerConfig._frameColumns);
+      const toggleLabel = document.createElement("label");
+      const toggle = document.createElement("input");
 
+      cell.className = "frame-cell";
       button.type = "button";
       button.className = "frame-thumb";
       button.title = `Frame ${index}`;
@@ -337,13 +369,101 @@ export class SpritePlaygroundScene extends Phaser.Scene {
         this.showFrame(index);
       });
 
-      strip.appendChild(button);
+      toggle.type = "checkbox";
+      toggle.checked = this.activeFrameIndexes.includes(index);
+      toggle.addEventListener("change", () => {
+        this.setFrameIncluded(index, toggle.checked);
+      });
+
+      toggleLabel.className = "frame-toggle";
+      toggleLabel.append(toggle, document.createTextNode("Use"));
+
+      cell.append(button, toggleLabel);
+      strip.appendChild(cell);
+      this.frameToggles[index] = toggle;
       return button;
     });
 
-    this.inspector.append(controls, frameRow, fpsRow, strip);
+    const utilityControls = document.createElement("div");
+    utilityControls.className = "inspector-controls compact";
+
+    const allButton = document.createElement("button");
+    allButton.type = "button";
+    allButton.textContent = "All";
+    allButton.addEventListener("click", () => this.setAllFramesIncluded(true));
+
+    const oddEvenButton = document.createElement("button");
+    oddEvenButton.type = "button";
+    oddEvenButton.textContent = "Every Other";
+    oddEvenButton.addEventListener("click", () => {
+      this.activeFrameIndexes = this.playerConfig.frames
+        .map((_frame, index) => index)
+        .filter((index) => index % 2 === 0);
+      this.syncFrameToggles();
+      this.rebuildIdleAnimation();
+    });
+
+    const clearButton = document.createElement("button");
+    clearButton.type = "button";
+    clearButton.textContent = "First";
+    clearButton.addEventListener("click", () => {
+      this.activeFrameIndexes = [0];
+      this.syncFrameToggles();
+      this.rebuildIdleAnimation();
+    });
+
+    utilityControls.append(allButton, oddEvenButton, clearButton);
+
+    this.inspector.append(controls, frameRow, fpsRow, this.loopReadout, utilityControls, strip);
     this.hud.appendChild(this.inspector);
     this.setInspectorFrame(0, false);
+    this.updateLoopReadout();
+  }
+
+  setFrameIncluded(index, included) {
+    const nextFrames = new Set(this.activeFrameIndexes);
+
+    if (included) {
+      nextFrames.add(index);
+    } else if (nextFrames.size > 1) {
+      nextFrames.delete(index);
+    } else {
+      this.frameToggles[index].checked = true;
+      return;
+    }
+
+    this.activeFrameIndexes = [...nextFrames].sort((a, b) => a - b);
+    this.syncFrameToggles();
+    this.rebuildIdleAnimation();
+  }
+
+  setAllFramesIncluded(included) {
+    if (included) {
+      this.activeFrameIndexes = this.playerConfig.frames.map((_frame, index) => index);
+    } else {
+      this.activeFrameIndexes = [0];
+    }
+
+    this.syncFrameToggles();
+    this.rebuildIdleAnimation();
+  }
+
+  syncFrameToggles() {
+    this.frameToggles.forEach((toggle, index) => {
+      if (toggle) {
+        toggle.checked = this.activeFrameIndexes.includes(index);
+      }
+    });
+  }
+
+  updateLoopReadout() {
+    if (!this.loopReadout) return;
+
+    this.loopReadout.textContent = `Loop frames: ${this.getActiveFrames().join(", ")}`;
+    this.frameButtons.forEach((button, frameIndex) => {
+      button.classList.toggle("included", this.activeFrameIndexes.includes(frameIndex));
+      button.classList.toggle("excluded", !this.activeFrameIndexes.includes(frameIndex));
+    });
   }
 
   playIdleAnimation() {
@@ -394,6 +514,8 @@ export class SpritePlaygroundScene extends Phaser.Scene {
 
     this.frameButtons.forEach((button, frameIndex) => {
       button.classList.toggle("active", frameIndex === this.currentFrameIndex);
+      button.classList.toggle("included", this.activeFrameIndexes.includes(frameIndex));
+      button.classList.toggle("excluded", !this.activeFrameIndexes.includes(frameIndex));
     });
   }
 

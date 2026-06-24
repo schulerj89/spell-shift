@@ -74,6 +74,10 @@ body {
   margin-bottom: 10px;
 }
 
+.inspector-controls.compact {
+  margin: 8px 0 10px;
+}
+
 .inspector-controls button,
 .frame-thumb {
   min-height: 34px;
@@ -113,9 +117,13 @@ body {
 .frame-strip {
   display: grid;
   grid-template-columns: repeat(4, 64px);
-  gap: 8px;
+  gap: 12px 8px;
   justify-content: start;
   margin-top: 10px;
+}
+
+.frame-cell {
+  width: 64px;
 }
 
 .frame-thumb {
@@ -131,7 +139,37 @@ body {
   image-rendering: auto;
 }
 
+.frame-thumb.included {
+  border-color: rgba(153, 240, 184, 0.72);
+}
+
+.frame-thumb.excluded {
+  opacity: 0.42;
+  filter: grayscale(0.75);
+}
+
 .frame-thumb.active {
   border-color: #8ec3f2;
   box-shadow: 0 0 0 2px rgba(142, 195, 242, 0.28);
+}
+
+.frame-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 0.72rem;
+  color: #d4d2cb;
+}
+
+.frame-toggle input {
+  margin: 0;
+}
+
+.loop-readout {
+  margin: 8px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: #99f0b8;
 }
