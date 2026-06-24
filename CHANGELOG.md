@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.11 - 2026-06-24
+
+- Added `scripts/make-sprite-transparent.ps1` to sample the JPG frame-edge background color and generate a transparent PNG spritesheet.
+- Generated `public/assets/sprites/hero-sprite-sheet-transparent.png` from the hero JPG and switched the playground to load that PNG directly.
+- Added `npm run sprite:transparent` for regenerating the transparent spritesheet.
+- Refreshed the idle preview screenshot and Playwright video artifacts against the generated transparent PNG.
+
 ## 0.1.10 - 2026-06-24
 
 - Updated the sprite playground to preview only the idle animation with no player movement input.

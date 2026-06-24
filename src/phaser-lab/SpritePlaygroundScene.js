@@ -3,11 +3,10 @@ import Phaser from "phaser";
 const SPRITE_SHEETS = [
   {
     key: "hero-sheet-idle",
-    imageKey: "hero-sheet-idle-source",
-    path: "/assets/sprites/hero-sprite-sheet.jpg",
+    path: "/assets/sprites/hero-sprite-sheet-transparent.png",
     frameWidth: 320,
     frameHeight: 320,
-    label: "Hero idle sheet (320x320)"
+    label: "Hero idle transparent sheet (320x320)"
   }
 ];
 
@@ -39,7 +38,10 @@ export class SpritePlaygroundScene extends Phaser.Scene {
 
   preload() {
     SPRITE_SHEETS.forEach((cfg) => {
-      this.load.image(cfg.imageKey, cfg.path);
+      this.load.spritesheet(cfg.key, cfg.path, {
+        frameWidth: cfg.frameWidth,
+        frameHeight: cfg.frameHeight
+      });
     });
     this.load.image(LEVEL_BACKGROUND.key, LEVEL_BACKGROUND.path);
 
@@ -69,7 +71,6 @@ export class SpritePlaygroundScene extends Phaser.Scene {
     this.wallGroup = this.physics.add.staticGroup();
     this.groundGroup = this.physics.add.staticGroup();
 
-    this.createTransparentSpriteSheets();
     this.bootstrapSpriteSheets();
     this.createFloor();
     this.createWalls();
@@ -103,107 +104,6 @@ export class SpritePlaygroundScene extends Phaser.Scene {
     if (status) {
       status.textContent = "Sprite playground loaded. Idle animation only.";
     }
-  }
-
-  createTransparentSpriteSheets() {
-    SPRITE_SHEETS.forEach((cfg) => {
-      const sourceTexture = this.textures.get(cfg.imageKey);
-      const sourceImage = sourceTexture?.getSourceImage?.() ?? sourceTexture?.source?.[0]?.image;
-
-      if (!sourceImage) {
-        console.error(`[sprite-sheet] Missing source image for ${cfg.label}`);
-        return;
-      }
-
-      const canvas = document.createElement("canvas");
-      canvas.width = sourceImage.width;
-      canvas.height = sourceImage.height;
-
-      const context = canvas.getContext("2d", { willReadFrequently: true });
-      context.drawImage(sourceImage, 0, 0);
-
-      this.removeFrameEdgeBackground(context, canvas.width, canvas.height, cfg.frameWidth, cfg.frameHeight);
-
-      const created = this.textures.addSpriteSheet(cfg.key, canvas, {
-        frameWidth: cfg.frameWidth,
-        frameHeight: cfg.frameHeight
-      });
-
-      if (!created) {
-        console.error(`[sprite-sheet] Failed to create transparent sprite sheet for ${cfg.key}`);
-        return;
-      }
-
-      console.log(`[sprite-sheet] Removed near-white edge background for ${cfg.label}`);
-    });
-  }
-
-  removeFrameEdgeBackground(context, width, height, frameWidth, frameHeight) {
-    const image = context.getImageData(0, 0, width, height);
-    const { data } = image;
-    const columns = Math.floor(width / frameWidth);
-    const rows = Math.floor(height / frameHeight);
-
-    const isBackgroundPixel = (index) => {
-      const red = data[index];
-      const green = data[index + 1];
-      const blue = data[index + 2];
-      const brightest = Math.max(red, green, blue);
-      const darkest = Math.min(red, green, blue);
-
-      return brightest > 218 && brightest - darkest < 42;
-    };
-
-    const clearConnectedBackground = (frameX, frameY) => {
-      const minX = frameX * frameWidth;
-      const minY = frameY * frameHeight;
-      const maxX = minX + frameWidth - 1;
-      const maxY = minY + frameHeight - 1;
-      const stack = [];
-      const visited = new Uint8Array(frameWidth * frameHeight);
-
-      const push = (x, y) => {
-        if (x < minX || x > maxX || y < minY || y > maxY) return;
-        const localIndex = (y - minY) * frameWidth + (x - minX);
-        if (visited[localIndex]) return;
-
-        visited[localIndex] = 1;
-        stack.push([x, y]);
-      };
-
-      for (let x = minX; x <= maxX; x += 1) {
-        push(x, minY);
-        push(x, maxY);
-      }
-
-      for (let y = minY; y <= maxY; y += 1) {
-        push(minX, y);
-        push(maxX, y);
-      }
-
-      while (stack.length > 0) {
-        const [x, y] = stack.pop();
-        const index = (y * width + x) * 4;
-
-        if (!isBackgroundPixel(index)) {
-          continue;
-        }
-
-        data[index + 3] = 0;
-        push(x + 1, y);
-        push(x - 1, y);
-        push(x, y + 1);
-        push(x, y - 1);
-      }
-    };
-
-    for (let row = 0; row < rows; row += 1) {
-      for (let column = 0; column < columns; column += 1) {
-        clearConnectedBackground(column, row);
-      }
-    }
-
-    context.putImageData(image, 0, 0);
   }
 
   resolveSheetGrid(cfg) {
