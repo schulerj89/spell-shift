@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.2 - 2026-06-23
+
+- Added left-click drag look controls for the follow camera.
+- Added follow camera tuning sliders for distance, height, target height, side offset, and reset-behind behavior.
+- Added jump tuning controls for launch delay, force, gravity, collider radius, collider height, and ground offset.
+- Added a visible jump hitbox helper toggle for character movement testing.
+
 ## 0.1.1 - 2026-06-23
 
 - Added a vanilla Vite + Three.js Character Test Lab scene.
