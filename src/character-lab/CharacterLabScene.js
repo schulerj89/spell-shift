@@ -58,6 +58,7 @@ export class CharacterLabScene {
     this.pendingJumpLaunchSeconds = null;
     this.verticalVelocity = 0;
     this.isGrounded = true;
+    this.isMovingForJump = false;
     this.animationFrameId = null;
 
     this.helpers = {
@@ -413,6 +414,7 @@ export class CharacterLabScene {
     const moveInput = this.input.getMovementVector();
     const inputLength = Math.hypot(moveInput.x, moveInput.z);
     const isMoving = inputLength > 0;
+    this.isMovingForJump = isMoving;
 
     if (isMoving) {
       this.hero.clearManualPreview();
@@ -447,7 +449,7 @@ export class CharacterLabScene {
 
   requestJump() {
     if (!this.hero || !this.isGrounded || this.pendingJumpLaunchSeconds !== null) return;
-    if (!this.hero.playJumpIfAvailable()) return;
+    if (!this.hero.playJumpIfAvailable({ moving: this.isMovingForJump })) return;
 
     this.isGrounded = false;
     this.verticalVelocity = 0;

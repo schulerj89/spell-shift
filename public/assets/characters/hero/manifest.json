@@ -23,6 +23,12 @@
       "url": "/assets/characters/hero/Meshy_AI_Athletic_Figure_in_Gr_biped/Meshy_AI_Athletic_Figure_in_Gr_biped_Animation_Regular_Jump_withSkin.glb"
     },
     {
+      "id": "jump-over-obstacle-2",
+      "label": "Jump Over Obstacle 2",
+      "type": "animation",
+      "url": "/assets/characters/hero/Meshy_AI_Athletic_Figure_in_Gr_biped/Meshy_AI_Animation_Jump_Over_Obstacle_2_withSkin.glb"
+    },
+    {
       "id": "roll-dodge-2",
       "label": "Roll Dodge 2",
       "type": "animation",

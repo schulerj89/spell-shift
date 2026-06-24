@@ -118,8 +118,10 @@ export class HeroCharacter {
     }
   }
 
-  playJumpIfAvailable() {
-    const jumpClip = this.findClipByText("jump");
+  playJumpIfAvailable({ moving = false } = {}) {
+    const jumpClip = moving
+      ? this.findClipByText("jump over obstacle") ?? this.findClipByText("obstacle") ?? this.findClipByText("jump")
+      : this.findClipByText("regular jump") ?? this.findClipByText("jump");
     if (!jumpClip) return false;
 
     this.playAnimation(jumpClip.id, { loopOnce: true, lockMotion: true });

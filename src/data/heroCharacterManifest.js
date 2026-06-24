@@ -6,6 +6,7 @@ export const heroCharacterManifest = {
     ["idle-3", "Idle 3", "base-animation", "/assets/characters/hero/Meshy_AI_Athletic_Figure_in_Gr_biped/Meshy_AI_Athletic_Figure_in_Gr_biped_Animation_Idle_3_withSkin.glb"],
     ["idle-6", "Idle 6", "animation", "/assets/characters/hero/Meshy_AI_Athletic_Figure_in_Gr_biped/Meshy_AI_Athletic_Figure_in_Gr_biped_Animation_Idle_6_withSkin.glb"],
     ["jump", "Regular Jump", "animation", "/assets/characters/hero/Meshy_AI_Athletic_Figure_in_Gr_biped/Meshy_AI_Athletic_Figure_in_Gr_biped_Animation_Regular_Jump_withSkin.glb"],
+    ["jump-over-obstacle-2", "Jump Over Obstacle 2", "animation", "/assets/characters/hero/Meshy_AI_Athletic_Figure_in_Gr_biped/Meshy_AI_Animation_Jump_Over_Obstacle_2_withSkin.glb"],
     ["roll-dodge-2", "Roll Dodge 2", "animation", "/assets/characters/hero/Meshy_AI_Athletic_Figure_in_Gr_biped/Meshy_AI_Athletic_Figure_in_Gr_biped_Animation_Roll_Dodge_2_withSkin.glb"],
     ["roll-dodge-3", "Roll Dodge 3", "animation", "/assets/characters/hero/Meshy_AI_Athletic_Figure_in_Gr_biped/Meshy_AI_Athletic_Figure_in_Gr_biped_Animation_Roll_Dodge_3_withSkin.glb"],
     ["run", "Running", "animation", "/assets/characters/hero/Meshy_AI_Athletic_Figure_in_Gr_biped/Meshy_AI_Athletic_Figure_in_Gr_biped_Animation_Running_withSkin.glb"],
