@@ -550,7 +550,11 @@ export class CharacterLabScene {
   }
 
   getActiveJumpHitboxFloorOffset() {
-    return this.isGrounded ? 0 : this.jumpSettings.airFootLift;
+    if (this.isGrounded || this.pendingJumpLaunchSeconds !== null) {
+      return 0;
+    }
+
+    return this.jumpSettings.airFootLift;
   }
 
   resize() {
