@@ -9,10 +9,16 @@ const DEFAULT_CAMERA_SETTINGS = {
   targetHeight: 1.1,
   sideOffset: 0
 };
+const DEFAULT_JUMP_SETTINGS = {
+  launchDelayMs: 0,
+  force: 4.8,
+  gravity: 13,
+  radius: 0.35,
+  height: 1.7,
+  groundOffset: 0
+};
 const MOVE_SPEED = 2.8;
 const TURN_SPEED = 12;
-const JUMP_SPEED = 4.8;
-const GRAVITY = 13;
 const LOOK_SENSITIVITY = 0.005;
 const MIN_CAMERA_PITCH = 0.12;
 const MAX_CAMERA_PITCH = 0.95;
@@ -47,6 +53,8 @@ export class CharacterLabScene {
     this.followCameraYaw = 0;
     this.isPointerLooking = false;
     this.cameraSettings = { ...DEFAULT_CAMERA_SETTINGS };
+    this.jumpSettings = { ...DEFAULT_JUMP_SETTINGS };
+    this.pendingJumpLaunchSeconds = null;
     this.verticalVelocity = 0;
     this.isGrounded = true;
     this.animationFrameId = null;
@@ -55,7 +63,8 @@ export class CharacterLabScene {
       grid: new THREE.GridHelper(18, 18, 0x8fd4bb, 0x3d514b),
       axes: new THREE.AxesHelper(1.4),
       skeleton: null,
-      bounds: null
+      bounds: null,
+      jumpHitbox: null
     };
 
     this.statusEl = document.querySelector("#load-status");
@@ -153,6 +162,8 @@ export class CharacterLabScene {
     this.helpers.bounds = new THREE.BoxHelper(this.hero.root, 0x96d2bb);
     this.helpers.bounds.name = "HeroBoundsHelper";
     this.scene.add(this.helpers.bounds);
+
+    this.createJumpHitboxHelper();
   }
 
   bindDebugControls() {
@@ -168,6 +179,9 @@ export class CharacterLabScene {
     this.bindCheckbox("#toggle-axes", (checked) => {
       this.helpers.axes.visible = checked;
     });
+    this.bindCheckbox("#toggle-jump-hitbox", (checked) => {
+      if (this.helpers.jumpHitbox) this.helpers.jumpHitbox.visible = checked;
+    });
     this.bindCheckbox("#toggle-follow-camera", (checked) => {
       this.followCamera = checked;
       this.controls.enabled = !checked;
@@ -178,6 +192,7 @@ export class CharacterLabScene {
 
     this.controls.enabled = !this.followCamera;
     this.bindCameraControls();
+    this.bindJumpControls();
   }
 
   bindCheckbox(selector, onChange) {
@@ -187,10 +202,10 @@ export class CharacterLabScene {
   }
 
   bindCameraControls() {
-    this.bindRange("#camera-distance", "#camera-distance-value", "distance");
-    this.bindRange("#camera-height", "#camera-height-value", "height");
-    this.bindRange("#camera-target", "#camera-target-value", "targetHeight");
-    this.bindRange("#camera-side", "#camera-side-value", "sideOffset");
+    this.bindRange("#camera-distance", "#camera-distance-value", this.cameraSettings, "distance");
+    this.bindRange("#camera-height", "#camera-height-value", this.cameraSettings, "height");
+    this.bindRange("#camera-target", "#camera-target-value", this.cameraSettings, "targetHeight");
+    this.bindRange("#camera-side", "#camera-side-value", this.cameraSettings, "sideOffset");
 
     document.querySelector("#reset-follow-camera")?.addEventListener("click", () => {
       this.cameraSettings = { ...DEFAULT_CAMERA_SETTINGS };
@@ -201,14 +216,43 @@ export class CharacterLabScene {
     this.syncCameraControlValues();
   }
 
-  bindRange(inputSelector, valueSelector, settingKey) {
+  bindJumpControls() {
+    this.bindRange("#jump-delay", "#jump-delay-value", this.jumpSettings, "launchDelayMs", {
+      format: (value) => `${Math.round(value)}ms`
+    });
+    this.bindRange("#jump-force", "#jump-force-value", this.jumpSettings, "force");
+    this.bindRange("#jump-gravity", "#jump-gravity-value", this.jumpSettings, "gravity");
+    this.bindRange("#jump-radius", "#jump-radius-value", this.jumpSettings, "radius", {
+      decimals: 2,
+      onInput: () => this.rebuildJumpHitbox()
+    });
+    this.bindRange("#jump-height", "#jump-height-value", this.jumpSettings, "height", {
+      decimals: 2,
+      onInput: () => this.rebuildJumpHitbox()
+    });
+    this.bindRange("#jump-ground", "#jump-ground-value", this.jumpSettings, "groundOffset", {
+      decimals: 2,
+      onInput: () => {
+        if (this.hero && this.isGrounded && this.pendingJumpLaunchSeconds === null) {
+          this.hero.root.position.y = this.jumpSettings.groundOffset;
+        }
+        this.updateJumpHitbox();
+      }
+    });
+  }
+
+  bindRange(inputSelector, valueSelector, settings, settingKey, options = {}) {
     const input = document.querySelector(inputSelector);
     const value = document.querySelector(valueSelector);
     if (!input) return;
 
     const update = () => {
-      this.cameraSettings[settingKey] = Number(input.value);
-      if (value) value.textContent = Number(input.value).toFixed(1);
+      settings[settingKey] = Number(input.value);
+      if (value) {
+        value.textContent =
+          options.format?.(Number(input.value)) ?? Number(input.value).toFixed(options.decimals ?? 1);
+      }
+      options.onInput?.();
     };
 
     input.addEventListener("input", update);
@@ -230,6 +274,47 @@ export class CharacterLabScene {
       input.value = String(this.cameraSettings[settingKey]);
       if (value) value.textContent = this.cameraSettings[settingKey].toFixed(1);
     });
+  }
+
+  createJumpHitboxHelper() {
+    this.helpers.jumpHitbox = this.buildJumpHitboxMesh();
+    this.helpers.jumpHitbox.name = "HeroJumpHitboxHelper";
+    this.scene.add(this.helpers.jumpHitbox);
+    this.updateJumpHitbox();
+  }
+
+  buildJumpHitboxMesh() {
+    const geometry = this.buildJumpHitboxGeometry();
+    const material = new THREE.MeshBasicMaterial({
+      color: 0xf6d365,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.72,
+      depthWrite: false
+    });
+
+    return new THREE.Mesh(geometry, material);
+  }
+
+  buildJumpHitboxGeometry() {
+    return new THREE.CylinderGeometry(
+      this.jumpSettings.radius,
+      this.jumpSettings.radius,
+      this.jumpSettings.height,
+      20,
+      1,
+      true
+    );
+  }
+
+  rebuildJumpHitbox() {
+    if (!this.helpers.jumpHitbox) return;
+
+    const wasVisible = this.helpers.jumpHitbox.visible;
+    this.helpers.jumpHitbox.geometry.dispose();
+    this.helpers.jumpHitbox.geometry = this.buildJumpHitboxGeometry();
+    this.helpers.jumpHitbox.visible = wasVisible;
+    this.updateJumpHitbox();
   }
 
   renderAnimationButtons(clips) {
@@ -311,6 +396,7 @@ export class CharacterLabScene {
     this.updateMovement(delta);
     this.hero?.update(delta);
     this.helpers.bounds?.update();
+    this.updateJumpHitbox();
     this.updateCamera(delta);
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
@@ -346,23 +432,52 @@ export class CharacterLabScene {
       );
     }
 
-    if (this.input.consumeJumpPressed() && this.isGrounded && this.hero.playJumpIfAvailable()) {
-      this.verticalVelocity = JUMP_SPEED;
-      this.isGrounded = false;
+    if (this.input.consumeJumpPressed()) {
+      this.requestJump();
     }
 
-    if (!this.isGrounded) {
-      this.verticalVelocity -= GRAVITY * delta;
-      this.hero.root.position.y += this.verticalVelocity * delta;
-
-      if (this.hero.root.position.y <= 0) {
-        this.hero.root.position.y = 0;
-        this.verticalVelocity = 0;
-        this.isGrounded = true;
-      }
-    }
-
+    this.updateJump(delta);
     this.hero.playLocomotion(isMoving);
+  }
+
+  requestJump() {
+    if (!this.hero || !this.isGrounded || this.pendingJumpLaunchSeconds !== null) return;
+    if (!this.hero.playJumpIfAvailable()) return;
+
+    this.isGrounded = false;
+    this.verticalVelocity = 0;
+    this.pendingJumpLaunchSeconds = this.jumpSettings.launchDelayMs / 1000;
+
+    if (this.pendingJumpLaunchSeconds <= 0) {
+      this.launchJump();
+    }
+  }
+
+  launchJump() {
+    this.pendingJumpLaunchSeconds = null;
+    this.verticalVelocity = this.jumpSettings.force;
+  }
+
+  updateJump(delta) {
+    if (!this.hero || this.isGrounded) return;
+
+    if (this.pendingJumpLaunchSeconds !== null) {
+      this.pendingJumpLaunchSeconds -= delta;
+      if (this.pendingJumpLaunchSeconds <= 0) {
+        this.launchJump();
+      }
+      return;
+    }
+
+    this.verticalVelocity -= this.jumpSettings.gravity * delta;
+    this.hero.root.position.y += this.verticalVelocity * delta;
+
+    if (this.hero.root.position.y <= this.jumpSettings.groundOffset) {
+      this.hero.root.position.y = this.jumpSettings.groundOffset;
+      this.verticalVelocity = 0;
+      this.isGrounded = true;
+      this.pendingJumpLaunchSeconds = null;
+    }
   }
 
   updateCamera(delta) {
@@ -417,6 +532,16 @@ export class CharacterLabScene {
 
     this.camera.position.copy(this.hero.root.position).add(this.getFollowCameraOffset());
     this.controls.target.copy(desiredTarget);
+  }
+
+  updateJumpHitbox() {
+    if (!this.hero || !this.helpers.jumpHitbox) return;
+
+    this.helpers.jumpHitbox.position.set(
+      this.hero.root.position.x,
+      this.hero.root.position.y + this.jumpSettings.height * 0.5,
+      this.hero.root.position.z
+    );
   }
 
   resize() {
