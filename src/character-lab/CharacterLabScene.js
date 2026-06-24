@@ -85,6 +85,8 @@ export class CharacterLabScene {
     this.statusEl = document.querySelector("#load-status");
     this.animationButtonsEl = document.querySelector("#animation-buttons");
     this.currentAnimationEl = document.querySelector("#current-animation");
+    this.visualBounds = new THREE.Box3();
+    this.visualCenter = new THREE.Vector3();
 
     this.boundAnimate = this.animate.bind(this);
     this.boundResize = this.resize.bind(this);
@@ -439,7 +441,7 @@ export class CharacterLabScene {
 
     this.updateMovement(delta);
     this.hero?.update(delta);
-    this.helpers.bounds?.update();
+    this.updateBoundsHelper();
     this.updateJumpHitbox();
     this.updateCamera(delta);
     this.controls.update();
@@ -604,12 +606,31 @@ export class CharacterLabScene {
 
   updateJumpHitbox() {
     if (!this.hero || !this.helpers.jumpHitbox) return;
+    const visualAnchor = this.getHeroVisualAnchor();
 
     this.helpers.jumpHitbox.position.set(
-      this.hero.root.position.x,
-      this.hero.root.position.y + this.getActiveJumpHitboxFloorOffset() + this.jumpSettings.height * 0.5,
-      this.hero.root.position.z
+      visualAnchor.x,
+      visualAnchor.y + this.getActiveJumpHitboxFloorOffset() + this.jumpSettings.height * 0.5,
+      visualAnchor.z
     );
+  }
+
+  updateBoundsHelper() {
+    if (!this.hero || !this.helpers.bounds) return;
+    this.helpers.bounds.setFromObject(this.hero.baseScene ?? this.hero.root);
+  }
+
+  getHeroVisualAnchor() {
+    const target = this.hero.baseScene ?? this.hero.root;
+    this.visualBounds.setFromObject(target);
+
+    if (this.visualBounds.isEmpty()) {
+      return this.hero.root.position;
+    }
+
+    this.visualBounds.getCenter(this.visualCenter);
+    this.visualCenter.y = this.visualBounds.min.y;
+    return this.visualCenter;
   }
 
   getActiveJumpHitboxFloorOffset() {
