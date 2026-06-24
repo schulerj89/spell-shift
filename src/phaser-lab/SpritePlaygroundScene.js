@@ -1,130 +1,140 @@
 import Phaser from "phaser";
 
-const SPRITE_CONFIG = {
-  key: "hero-sheet",
-  path: "/assets/sprites/hero-sprite-sheet.jpg",
-  frameWidth: 128,
-  frameHeight: 128
-};
+const SPRITE_SHEETS = [
+  {
+    key: "hero-sheet-walk",
+    path: "/assets/sprites/hero-sprite-sheet.jpg",
+    frameWidth: 128,
+    frameHeight: 128,
+    label: "Walk/Action sheet"
+  },
+  {
+    key: "hero-sheet-idle",
+    path: "/assets/sprites/hero-sprite-sheet-alt.jpg",
+    frameWidth: 80,
+    frameHeight: 80,
+    label: "Idle-only candidate"
+  }
+];
 
 const PLAYGROUND_CONFIG = {
   mapWidth: 2400,
   mapHeight: 1600,
-  floorY: 1200,
+  floorY: 1180,
+  floorThickness: 60,
   tileColor: 0x2d4a52,
   wallColor: 0x4c6278,
-  playerSpeed: 260
+  playerSpeed: 250,
+  gravityY: 700
 };
 
 export class SpritePlaygroundScene extends Phaser.Scene {
   constructor() {
     super("sprite-playground");
+
+    this.activeSpriteIndex = 1;
+    this.playerConfig = SPRITE_SHEETS[this.activeSpriteIndex];
+    this.hud = null;
+    this.currentSheetText = null;
+    this.hasIdle = false;
+    this.hasWalk = false;
   }
 
   preload() {
-    this.load.spritesheet(SPRITE_CONFIG.key, SPRITE_CONFIG.path, {
-      frameWidth: SPRITE_CONFIG.frameWidth,
-      frameHeight: SPRITE_CONFIG.frameHeight
+    SPRITE_SHEETS.forEach((cfg) => {
+      this.load.spritesheet(cfg.key, cfg.path, {
+        frameWidth: cfg.frameWidth,
+        frameHeight: cfg.frameHeight
+      });
     });
 
-    this.load.on("loaderror", (_file, _img) => {
+    this.load.on("loaderror", () => {
       console.error("Failed to load sprite assets.");
       const status = document.querySelector("#status");
       if (status) {
-        status.textContent = "Failed to load sprite assets. Check path in public/assets/sprites.";
+        status.textContent = "Failed to load sprite assets from public/assets/sprites.";
       }
     });
   }
 
   create() {
     const status = document.querySelector("#status");
+    this.hud = document.querySelector("#playground-hud");
+
     if (status) {
-      status.textContent = "Loading sprite and building playground.";
+      status.textContent = "Loading sprite sheets and building playground.";
     }
 
-    this.background = this.add.rectangle(
+    this.add.rectangle(
       PLAYGROUND_CONFIG.mapWidth / 2,
       PLAYGROUND_CONFIG.mapHeight / 2,
       PLAYGROUND_CONFIG.mapWidth,
       PLAYGROUND_CONFIG.mapHeight,
       PLAYGROUND_CONFIG.tileColor
-    );
-    this.background.setStrokeStyle(2, 0x44586b);
-
-    this.ground = this.add.rectangle(
-      PLAYGROUND_CONFIG.mapWidth / 2,
-      PLAYGROUND_CONFIG.floorY,
-      PLAYGROUND_CONFIG.mapWidth - 120,
-      60,
-      0x3f5a4f
-    );
+    ).setStrokeStyle(2, 0x44586b);
 
     this.physics.world.setBounds(0, 0, PLAYGROUND_CONFIG.mapWidth, PLAYGROUND_CONFIG.mapHeight);
     this.physics.world.setBoundsCollision(true, true, true, true);
+    this.physics.world.gravity.y = PLAYGROUND_CONFIG.gravityY;
 
     this.wallGroup = this.physics.add.staticGroup();
+    this.groundGroup = this.physics.add.staticGroup();
+    this.createFloor();
     this.createWalls();
 
     this.player = this.physics.add.sprite(
       PLAYGROUND_CONFIG.mapWidth / 2,
-      PLAYGROUND_CONFIG.floorY - 40,
-      SPRITE_CONFIG.key,
-      0
+      PLAYGROUND_CONFIG.floorY - 80,
+      this.playerConfig.key
     );
-
     this.player.setOrigin(0.5, 0.75);
     this.player.setCollideWorldBounds(true);
-    this.player.body.setSize(52, 52);
-    this.player.setDisplaySize(72, 72);
-
-    const frameCount = this.textures.exists(SPRITE_CONFIG.key)
-      ? this.textures.get(SPRITE_CONFIG.key).frameTotal
-      : 1;
-    this.hasIdle = false;
-    this.hasWalk = false;
-
-    if (frameCount > 1) {
-      this.anims.create({
-        key: "idle",
-        frames: this.anims.generateFrameNumbers(SPRITE_CONFIG.key, {
-          start: 0,
-          end: Math.min(3, frameCount - 1)
-        }),
-        frameRate: 4,
-        repeat: -1
-      });
-      this.hasIdle = true;
-
-      this.anims.create({
-        key: "walk",
-        frames: this.anims.generateFrameNumbers(SPRITE_CONFIG.key, {
-          start: 4,
-          end: Math.min(frameCount - 1, 9)
-        }),
-        frameRate: 10,
-        repeat: -1
-      });
-      this.hasWalk = true;
-    }
-
+    this.player.setDisplaySize(84, 84);
+    this.player.body.setSize(this.playerConfig.frameWidth * 0.45, this.playerConfig.frameHeight * 0.65);
+    this.player.body.setOffset(
+      (this.player.width - this.playerConfig.frameWidth * 0.45) / 2,
+      this.player.height * 0.6
+    );
     this.physics.add.collider(this.player, this.wallGroup);
-    this.cursors = this.input.keyboard.createCursorKeys();
+    this.physics.add.collider(this.player, this.groundGroup);
 
+    this.setupAnimations(this.playerConfig);
+    this.currentlyActiveWalkAnim = `walk-${this.playerConfig.key}`;
+    this.currentlyActiveIdleAnim = `idle-${this.playerConfig.key}`;
+    this.player.play(this.hasIdle ? this.currentlyActiveIdleAnim : null, true);
+    this.applyCurrentSheetMessage();
+
+    this.cursors = this.input.keyboard.createCursorKeys();
     this.keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
     this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
     this.keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
     this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+    this.keyOne = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ONE);
+    this.keyTwo = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.TWO);
+    this.keyLeftBracket = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT_BRACKET);
+    this.keyRightBracket = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT_BRACKET);
 
-    this.physics.world.setBounds(0, 0, PLAYGROUND_CONFIG.mapWidth, PLAYGROUND_CONFIG.mapHeight);
     this.cameras.main.setBounds(0, 0, PLAYGROUND_CONFIG.mapWidth, PLAYGROUND_CONFIG.mapHeight);
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
     this.cameras.main.setZoom(1.35);
-
     this.cameras.main.setRoundPixels(true);
 
     if (status) {
-      status.textContent = "Sprite playground loaded. Move with WASD / arrow keys.";
+      status.textContent = "Sprite playground loaded. Press WASD/arrow to move. 1/2 or [/] swap sprite sheet.";
     }
+  }
+
+  createFloor() {
+    const floor = this.add.rectangle(
+      PLAYGROUND_CONFIG.mapWidth / 2,
+      PLAYGROUND_CONFIG.floorY,
+      PLAYGROUND_CONFIG.mapWidth - 120,
+      PLAYGROUND_CONFIG.floorThickness,
+      0x3f5a4f
+    );
+    floor.setStrokeStyle(2, 0x2b403b);
+    this.physics.add.existing(floor, true);
+    this.groundGroup.add(floor);
   }
 
   createWalls() {
@@ -139,7 +149,7 @@ export class SpritePlaygroundScene extends Phaser.Scene {
     this.makeWall(worldW * 0.45, worldH * 0.34, 20, 320);
     this.makeWall(worldW * 0.75, worldH * 0.68, 18, 260);
     this.makeWall(worldW * 0.58, worldH * 0.82, 22, 300);
-    this.makeWall(worldW * 0.16, worldH * 0.60, 18, 360);
+    this.makeWall(worldW * 0.16, worldH * 0.6, 18, 360);
   }
 
   makeWall(x, y, width, height) {
@@ -147,11 +157,105 @@ export class SpritePlaygroundScene extends Phaser.Scene {
     wall.setStrokeStyle(2, 0x8ea7ba);
     this.physics.add.existing(wall, true);
     this.wallGroup.add(wall);
-    return wall;
+  }
+
+  setupAnimations(config) {
+    const texture = this.textures.get(config.key);
+    const frameCount = texture ? texture.frameTotal : 0;
+
+    this.hasIdle = frameCount > 0;
+    this.hasWalk = frameCount >= 5;
+
+    const idleKey = `idle-${config.key}`;
+    const walkKey = `walk-${config.key}`;
+
+    if (!this.anims.exists(idleKey)) {
+      this.anims.create({
+        key: idleKey,
+        frames: this.anims.generateFrameNumbers(config.key, {
+          start: 0,
+          end: Math.max(0, Math.min(3, frameCount - 1))
+        }),
+        frameRate: 4,
+        repeat: -1,
+        skipMissedFrames: true
+      });
+    }
+
+    if (this.hasWalk && !this.anims.exists(walkKey)) {
+      this.anims.create({
+        key: walkKey,
+        frames: this.anims.generateFrameNumbers(
+          config.key,
+          {
+            start: 4,
+            end: Math.min(frameCount - 1, 11)
+          }
+        ),
+        frameRate: 10,
+        repeat: -1,
+        skipMissedFrames: true
+      });
+    }
+  }
+
+  switchSheet(nextIndex) {
+    const clampedIndex = Phaser.Math.Clamp(nextIndex, 0, SPRITE_SHEETS.length - 1);
+    if (clampedIndex === this.activeSpriteIndex) {
+      return;
+    }
+
+    const prevX = this.player?.x ?? PLAYGROUND_CONFIG.mapWidth / 2;
+    const prevY = this.player?.y ?? PLAYGROUND_CONFIG.floorY - 80;
+    const prevVx = this.player?.body?.velocity?.x ?? 0;
+    const prevVy = this.player?.body?.velocity?.y ?? 0;
+
+    this.activeSpriteIndex = clampedIndex;
+    this.playerConfig = SPRITE_SHEETS[this.activeSpriteIndex];
+
+    this.setupAnimations(this.playerConfig);
+    this.player.setTexture(this.playerConfig.key);
+    this.player.body.setSize(
+      this.playerConfig.frameWidth * 0.45,
+      this.playerConfig.frameHeight * 0.65
+    );
+    this.player.body.setOffset(
+      (this.player.width - this.playerConfig.frameWidth * 0.45) / 2,
+      this.player.height * 0.6
+    );
+    this.player.setDisplaySize(84, 84);
+    this.player.setPosition(prevX, prevY);
+    this.player.setVelocity(prevVx, prevVy);
+
+    this.currentlyActiveWalkAnim = `walk-${this.playerConfig.key}`;
+    this.currentlyActiveIdleAnim = `idle-${this.playerConfig.key}`;
+    this.applyCurrentSheetMessage();
+  }
+
+  applyCurrentSheetMessage() {
+    if (!this.currentSheetText) {
+      this.currentSheetText = document.createElement("p");
+      this.currentSheetText.className = "hint";
+      if (this.hud) {
+        this.hud.appendChild(this.currentSheetText);
+      }
+    }
+
+    this.currentSheetText.textContent = `Sprite: ${this.playerConfig.label}. Use 1/2 or [/] to switch.`;
   }
 
   update() {
-    const velocity = PLAYGROUND_CONFIG.playerSpeed;
+    if (Phaser.Input.Keyboard.JustDown(this.keyOne) || Phaser.Input.Keyboard.JustDown(this.keyLeftBracket)) {
+      this.switchSheet(0);
+      return;
+    }
+
+    if (Phaser.Input.Keyboard.JustDown(this.keyTwo) || Phaser.Input.Keyboard.JustDown(this.keyRightBracket)) {
+      this.switchSheet(1);
+      return;
+    }
+
+    const speed = PLAYGROUND_CONFIG.playerSpeed;
     const left = this.cursors.left.isDown || this.keyA.isDown;
     const right = this.cursors.right.isDown || this.keyD.isDown;
     const up = this.cursors.up.isDown || this.keyW.isDown;
@@ -160,31 +264,44 @@ export class SpritePlaygroundScene extends Phaser.Scene {
     let vx = 0;
     let vy = 0;
 
-    if (left) vx = -velocity;
-    if (right) vx = velocity;
-    if (up) vy = -velocity;
-    if (down) vy = velocity;
+    if (left) vx = -speed;
+    if (right) vx = speed;
+    if (up) vy = -speed;
+    if (down) vy = speed;
 
     if (vx !== 0 && vy !== 0) {
       vx *= Math.SQRT1_2;
       vy *= Math.SQRT1_2;
     }
 
-    this.player.setVelocity(vx, vy);
+    this.player.setVelocityX(vx);
+    if (up || down) {
+      this.player.setVelocityY(vy);
+    }
 
-    if (vx !== 0 || vy !== 0) {
-      if (this.hasWalk) {
-        this.player.play("walk", true);
+    const isMoving = vx !== 0 || vy !== 0;
+
+    if (isMoving) {
+      if (this.hasWalk && this.player.anims.exists(this.currentlyActiveWalkAnim)) {
+        this.player.play(this.currentlyActiveWalkAnim, true);
       }
-      this.player.rotation = Math.atan2(vy, vx) + Math.PI / 2;
+      if (vx !== 0 || vy !== 0) {
+        this.player.rotation = Math.atan2(vy, vx) + Math.PI / 2;
+      }
     } else {
-      if (this.hasIdle) {
-        this.player.play("idle", true);
+      if (this.hasIdle && this.player.anims.exists(this.currentlyActiveIdleAnim)) {
+        this.player.play(this.currentlyActiveIdleAnim, true);
       } else {
         this.player.setFrame(0);
       }
-      this.player.setVelocity(0, 0);
+      this.player.setVelocityX(0);
       this.player.rotation = 0;
+    }
+
+    const status = document.querySelector("#status");
+    if (status) {
+      const grounded = this.player.body.blocked.down ? "yes" : "no";
+      status.textContent = `${this.playerConfig.label} | grounded:${grounded} | y:${Math.round(this.player.y)}`;
     }
   }
 }

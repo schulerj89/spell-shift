@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.7 - 2026-06-24
+
+- Added support for both provided sprite sheets in the playground and added quick sheet swapping (1/2 or [ ] keys) to test idle-only vs. movement sheets.
+- Enabled a grounded floor collider at the bottom platform so the character cannot fall through the floor.
+- Switched movement to gravity-aware floor testing with wall grounding plus simple movement animations for the active sheet.
+- Added a short Playwright-based local capture to validate the sprite sheet behavior in the running playground.
+
 ## 0.1.6 - 2026-06-24
 
 - Updated the Phaser playground bootstrap to finish the 3D-to-2D conversion cleanup.

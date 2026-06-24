@@ -52,3 +52,8 @@ body {
   color: #8ec3f2;
   text-decoration: none;
 }
+
+.hint {
+  margin-top: 10px;
+  color: #b8d2f6;
+}
