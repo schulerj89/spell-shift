@@ -1,12 +1,19 @@
 import Phaser from "phaser";
 
-const SPRITE_SHEETS = [
+const HERO_IDLE_FRAMES = Array.from({ length: 8 }, (_unused, index) => {
+  const paddedIndex = String(index).padStart(3, "0");
+
+  return {
+    key: `hero-idle-frame-${paddedIndex}`,
+    path: `/assets/sprites/frames/frame_${paddedIndex}.png`
+  };
+});
+
+const SPRITE_SETS = [
   {
-    key: "hero-sheet-idle",
-    path: "/assets/sprites/hero-sprite-sheet-transparent.png",
-    frameWidth: 320,
-    frameHeight: 320,
-    label: "Hero idle transparent sheet (320x320)"
+    key: "hero-idle-frames",
+    frames: HERO_IDLE_FRAMES,
+    label: "Hero idle frame sequence"
   }
 ];
 
@@ -29,7 +36,7 @@ export class SpritePlaygroundScene extends Phaser.Scene {
     super("sprite-playground");
 
     this.activeSpriteIndex = 0;
-    this.playerConfig = SPRITE_SHEETS[this.activeSpriteIndex];
+    this.playerConfig = SPRITE_SETS[this.activeSpriteIndex];
     this.hud = null;
     this.currentSheetText = null;
     this.inspector = null;
@@ -46,10 +53,9 @@ export class SpritePlaygroundScene extends Phaser.Scene {
   }
 
   preload() {
-    SPRITE_SHEETS.forEach((cfg) => {
-      this.load.spritesheet(cfg.key, cfg.path, {
-        frameWidth: cfg.frameWidth,
-        frameHeight: cfg.frameHeight
+    SPRITE_SETS.forEach((cfg) => {
+      cfg.frames.forEach((frame) => {
+        this.load.image(frame.key, frame.path);
       });
     });
     this.load.image(LEVEL_BACKGROUND.key, LEVEL_BACKGROUND.path);
@@ -87,7 +93,7 @@ export class SpritePlaygroundScene extends Phaser.Scene {
     this.player = this.physics.add.sprite(
       PLAYGROUND_CONFIG.mapWidth / 2,
       PLAYGROUND_CONFIG.floorY - 20,
-      this.playerConfig.key
+      this.playerConfig.frames[0].key
     );
     this.player.setOrigin(0.5, 1);
     this.player.setCollideWorldBounds(true);
@@ -121,7 +127,7 @@ export class SpritePlaygroundScene extends Phaser.Scene {
   }
 
   resolveSheetGrid(cfg) {
-    const sourceTexture = this.textures.get(cfg.key);
+    const sourceTexture = this.textures.get(cfg.frames[0].key);
     const sourceImage = sourceTexture?.source?.[0];
     const imageWidth = sourceImage?.width ?? 0;
     const imageHeight = sourceImage?.height ?? 0;
@@ -130,43 +136,21 @@ export class SpritePlaygroundScene extends Phaser.Scene {
       return null;
     }
 
-    const frameWidth = cfg.frameWidth > 0 ? cfg.frameWidth : imageWidth / Math.max(1, cfg.frameCols);
-    const frameHeight = cfg.frameHeight > 0 ? cfg.frameHeight : imageHeight / Math.max(1, cfg.frameRows);
-
-    if (!Number.isInteger(frameWidth) || !Number.isInteger(frameHeight)) {
-      console.warn(
-        `[sprite-sheet] ${cfg.label} has non-integer frame size from layout ${cfg.frameCols ?? 1}x${
-          cfg.frameRows ?? 1
-        } on ${imageWidth}x${imageHeight}.`
-      );
-    }
-
-    if (cfg.frameWidth > 0 || cfg.frameHeight > 0) {
-      console.log(`[sprite-sheet] ${cfg.label} uses explicit frame size ${frameWidth}x${frameHeight}`);
-    } else {
-      console.log(
-        `[sprite-sheet] ${cfg.label} resolved to ${Math.floor(imageWidth / frameWidth)}x${Math.floor(
-          imageHeight / frameHeight
-        )} from ${cfg.frameCols ?? "auto"}x${cfg.frameRows ?? "auto"}`
-      );
-    }
-
-    const resolvedCols = Math.max(1, Math.floor(imageWidth / frameWidth));
-    const resolvedRows = Math.max(1, Math.floor(imageHeight / frameHeight));
+    console.log(`[sprite-frames] ${cfg.label} loaded frame size ${imageWidth}x${imageHeight}`);
 
     return {
-      frameWidth: Math.floor(frameWidth),
-      frameHeight: Math.floor(frameHeight),
+      frameWidth: imageWidth,
+      frameHeight: imageHeight,
       sourceWidth: imageWidth,
       sourceHeight: imageHeight,
-      resolvedCols,
-      resolvedRows
+      resolvedCols: 4,
+      resolvedRows: 2
     };
   }
 
   bootstrapSpriteSheets() {
-    SPRITE_SHEETS.forEach((cfg) => {
-      const sourceTexture = this.textures.get(cfg.key);
+    SPRITE_SETS.forEach((cfg) => {
+      const sourceTexture = this.textures.get(cfg.frames[0].key);
       const layout = this.resolveSheetGrid(cfg);
 
       if (!sourceTexture || !layout) {
@@ -175,12 +159,12 @@ export class SpritePlaygroundScene extends Phaser.Scene {
 
       cfg._frameWidth = layout.frameWidth;
       cfg._frameHeight = layout.frameHeight;
-      cfg._frameColumns = Math.max(1, Math.floor(layout.sourceWidth / layout.frameWidth));
-      cfg._frameRows = Math.max(1, Math.floor(layout.sourceHeight / layout.frameHeight));
-      cfg._frameCount = Math.max(0, sourceTexture.frameTotal - 1);
+      cfg._frameColumns = layout.resolvedCols;
+      cfg._frameRows = layout.resolvedRows;
+      cfg._frameCount = cfg.frames.length;
 
       console.log(
-        `[sprite-sheet] ${cfg.label}: ${cfg._frameColumns}x${cfg._frameRows}, frame=${cfg._frameWidth}x${cfg._frameHeight}, total=${cfg._frameCount}`
+        `[sprite-frames] ${cfg.label}: ${cfg._frameCount} frames, frame=${cfg._frameWidth}x${cfg._frameHeight}`
       );
     });
   }
@@ -217,8 +201,7 @@ export class SpritePlaygroundScene extends Phaser.Scene {
   }
 
   setupAnimations(config) {
-    const texture = this.textures.get(config.key);
-    const frameCount = texture ? Math.max(0, texture.frameTotal - 1) : 0;
+    const frameCount = config.frames.length;
 
     this.hasIdle = frameCount > 0;
     this.hasWalk = false;
@@ -232,10 +215,7 @@ export class SpritePlaygroundScene extends Phaser.Scene {
 
     this.anims.create({
       key: idleKey,
-      frames: this.anims.generateFrameNumbers(config.key, {
-        start: 0,
-        end: Math.max(0, frameCount - 1)
-      }),
+      frames: config.frames.map((frame) => ({ key: frame.key })),
       frameRate: this.frameRate,
       repeat: -1,
       skipMissedFrames: true
@@ -349,11 +329,9 @@ export class SpritePlaygroundScene extends Phaser.Scene {
       button.className = "frame-thumb";
       button.title = `Frame ${index}`;
       button.textContent = String(index);
-      button.style.backgroundImage = `url("${this.playerConfig.path}")`;
-      button.style.backgroundSize = `${this.playerConfig._frameColumns * 64}px ${
-        this.playerConfig._frameRows * 64
-      }px`;
-      button.style.backgroundPosition = `-${column * 64}px -${row * 64}px`;
+      button.style.backgroundImage = `url("${this.playerConfig.frames[index].path}")`;
+      button.style.backgroundSize = "contain";
+      button.style.backgroundPosition = "center";
       button.addEventListener("click", () => {
         this.pauseIdleAnimation();
         this.showFrame(index);
@@ -395,7 +373,7 @@ export class SpritePlaygroundScene extends Phaser.Scene {
   showFrame(index) {
     const frameIndex = Phaser.Math.Clamp(index, 0, Math.max(0, this.frameCount - 1));
     this.currentFrameIndex = frameIndex;
-    this.player.setFrame(frameIndex);
+    this.player.setTexture(this.playerConfig.frames[frameIndex].key);
     this.setInspectorFrame(frameIndex, true);
   }
 

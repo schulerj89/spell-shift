@@ -1,0 +1,257 @@
+{
+  "input_path": "C:\\Users\\joshs\\Projects\\spell-shift\\public\\assets\\sprites\\hero-sprite-sheet-transparent.png",
+  "source_width": 1280,
+  "source_height": 640,
+  "rows": 2,
+  "columns": 4,
+  "frame_width": 1312,
+  "frame_height": 1312,
+  "target_width": 1312,
+  "frame_count": 8,
+  "target_height": 1312,
+  "output_scale": 4,
+  "max_colors": 64,
+  "color_merge_tolerance": 8,
+  "remove_background": true,
+  "background_tolerance": 18,
+  "shared_palette": true,
+  "denoise": true,
+  "strengthen_outline": true,
+  "background_sample": [
+    249,
+    247,
+    248,
+    0
+  ],
+  "warnings": [
+    "manual-editing-applied"
+  ],
+  "output_sheet_path": "./sprite_sheet_final.png",
+  "output_frames_dir": "./frames",
+  "output_metadata_path": "./metadata_final.json",
+  "output_palette_path": "./palette_final.json",
+  "palette": [
+    [
+      188,
+      174,
+      162,
+      255
+    ],
+    [
+      149,
+      137,
+      126,
+      255
+    ],
+    [
+      40,
+      47,
+      62,
+      255
+    ],
+    [
+      3,
+      1,
+      0,
+      255
+    ],
+    [
+      16,
+      12,
+      12,
+      255
+    ],
+    [
+      35,
+      27,
+      24,
+      255
+    ],
+    [
+      206,
+      208,
+      215,
+      255
+    ],
+    [
+      60,
+      79,
+      106,
+      255
+    ],
+    [
+      18,
+      2,
+      0,
+      255
+    ],
+    [
+      3,
+      9,
+      19,
+      255
+    ],
+    [
+      42,
+      17,
+      3,
+      255
+    ],
+    [
+      95,
+      56,
+      27,
+      255
+    ],
+    [
+      167,
+      107,
+      59,
+      255
+    ],
+    [
+      236,
+      202,
+      162,
+      255
+    ],
+    [
+      254,
+      240,
+      214,
+      255
+    ],
+    [
+      253,
+      246,
+      234,
+      255
+    ],
+    [
+      236,
+      226,
+      216,
+      255
+    ],
+    [
+      236,
+      232,
+      233,
+      255
+    ],
+    [
+      253,
+      250,
+      248,
+      255
+    ],
+    [
+      226,
+      214,
+      203,
+      255
+    ],
+    [
+      210,
+      198,
+      189,
+      255
+    ],
+    [
+      234,
+      241,
+      251,
+      255
+    ],
+    [
+      251,
+      229,
+      198,
+      255
+    ],
+    [
+      15,
+      25,
+      41,
+      255
+    ],
+    [
+      168,
+      158,
+      151,
+      255
+    ],
+    [
+      150,
+      139,
+      129,
+      255
+    ],
+    [
+      164,
+      166,
+      172,
+      255
+    ],
+    [
+      48,
+      63,
+      84,
+      255
+    ],
+    [
+      32,
+      37,
+      49,
+      255
+    ],
+    [
+      119,
+      109,
+      100,
+      255
+    ],
+    [
+      28,
+      21,
+      19,
+      255
+    ],
+    [
+      180,
+      171,
+      162,
+      255
+    ],
+    [
+      76,
+      44,
+      21,
+      255
+    ],
+    [
+      2,
+      7,
+      15,
+      255
+    ],
+    [
+      12,
+      9,
+      9,
+      255
+    ],
+    [
+      133,
+      85,
+      47,
+      255
+    ],
+    [
+      12,
+      20,
+      32,
+      255
+    ]
+  ]
+}

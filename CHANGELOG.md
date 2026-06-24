@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.14 - 2026-06-24
+
+- Switched the idle animation to load the 8 individual PNG frames from `public/assets/sprites/frames/`.
+- Updated the animation inspector thumbnails and controls to work with the frame sequence instead of a sliced spritesheet.
+- Added the new frame assets and supporting sprite metadata files.
+- Refreshed the Playwright screenshot and idle video captures for the frame-folder animation.
+
 ## 0.1.13 - 2026-06-24
 
 - Added an in-page sprite animation inspector with play/pause, previous/next frame controls, a frame scrubber, and FPS adjustment.
