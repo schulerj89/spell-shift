@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.4 - 2026-06-23
+
+- Added separate run-jump tuning controls for obstacle-jump delay, force, gravity, forward speed, and airborne foot lift.
+- Updated jump and bounds helpers to follow the animated body during root-motion clips.
+- Added hero accessory toggles for starter shirt, starter pants, and starter shoes.
+- Added a hero accessory manifest and mirrored the single starter shoe asset into a shoe pair.
+
 ## 0.1.3 - 2026-06-23
 
 - Added the `Jump Over Obstacle 2` hero animation asset to the character manifests.
