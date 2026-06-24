@@ -85,6 +85,30 @@
         </section>
 
         <section>
+          <h2>Run Jump</h2>
+          <label class="range-control">
+            Launch delay <span id="run-jump-delay-value">0ms</span>
+            <input id="run-jump-delay" type="range" min="0" max="800" step="25" value="0" />
+          </label>
+          <label class="range-control">
+            Force <span id="run-jump-force-value">3.8</span>
+            <input id="run-jump-force" type="range" min="1" max="9" step="0.1" value="3.8" />
+          </label>
+          <label class="range-control">
+            Gravity <span id="run-jump-gravity-value">18.0</span>
+            <input id="run-jump-gravity" type="range" min="4" max="36" step="0.5" value="18" />
+          </label>
+          <label class="range-control">
+            Forward speed <span id="run-jump-forward-speed-value">4.5</span>
+            <input id="run-jump-forward-speed" type="range" min="0" max="10" step="0.1" value="4.5" />
+          </label>
+          <label class="range-control">
+            Air foot lift <span id="run-jump-air-foot-lift-value">0.40</span>
+            <input id="run-jump-air-foot-lift" type="range" min="0" max="1.2" step="0.05" value="0.4" />
+          </label>
+        </section>
+
+        <section>
           <h2>Movement</h2>
           <p>WASD or arrow keys move. Hold left click to look around. Space uses Regular Jump while still and Jump Over Obstacle while moving. Number keys play clips.</p>
         </section>

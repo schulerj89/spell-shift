@@ -18,6 +18,13 @@ const DEFAULT_JUMP_SETTINGS = {
   groundOffset: 0,
   airFootLift: 0
 };
+const DEFAULT_RUN_JUMP_SETTINGS = {
+  launchDelayMs: 0,
+  force: 3.8,
+  gravity: 18,
+  forwardSpeed: 4.5,
+  airFootLift: 0.4
+};
 const MOVE_SPEED = 2.8;
 const TURN_SPEED = 12;
 const LOOK_SENSITIVITY = 0.005;
@@ -55,8 +62,14 @@ export class CharacterLabScene {
     this.isPointerLooking = false;
     this.cameraSettings = { ...DEFAULT_CAMERA_SETTINGS };
     this.jumpSettings = { ...DEFAULT_JUMP_SETTINGS };
+    this.runJumpSettings = { ...DEFAULT_RUN_JUMP_SETTINGS };
+    this.activeJumpSettings = this.jumpSettings;
+    this.activeJumpType = "standing";
     this.pendingJumpLaunchSeconds = null;
     this.verticalVelocity = 0;
+    this.jumpHorizontalVelocity = new THREE.Vector3();
+    this.jumpLaunchDirection = new THREE.Vector3();
+    this.currentMoveDirection = new THREE.Vector3();
     this.isGrounded = true;
     this.isMovingForJump = false;
     this.animationFrameId = null;
@@ -195,6 +208,7 @@ export class CharacterLabScene {
     this.controls.enabled = !this.followCamera;
     this.bindCameraControls();
     this.bindJumpControls();
+    this.bindRunJumpControls();
   }
 
   bindCheckbox(selector, onChange) {
@@ -245,6 +259,30 @@ export class CharacterLabScene {
       decimals: 2,
       onInput: () => this.updateJumpHitbox()
     });
+  }
+
+  bindRunJumpControls() {
+    this.bindRange("#run-jump-delay", "#run-jump-delay-value", this.runJumpSettings, "launchDelayMs", {
+      format: (value) => `${Math.round(value)}ms`
+    });
+    this.bindRange("#run-jump-force", "#run-jump-force-value", this.runJumpSettings, "force");
+    this.bindRange("#run-jump-gravity", "#run-jump-gravity-value", this.runJumpSettings, "gravity");
+    this.bindRange(
+      "#run-jump-forward-speed",
+      "#run-jump-forward-speed-value",
+      this.runJumpSettings,
+      "forwardSpeed"
+    );
+    this.bindRange(
+      "#run-jump-air-foot-lift",
+      "#run-jump-air-foot-lift-value",
+      this.runJumpSettings,
+      "airFootLift",
+      {
+        decimals: 2,
+        onInput: () => this.updateJumpHitbox()
+      }
+    );
   }
 
   bindRange(inputSelector, valueSelector, settings, settingKey, options = {}) {
@@ -429,7 +467,11 @@ export class CharacterLabScene {
         .addScaledVector(cameraForward, -moveInput.z / inputLength)
         .normalize();
 
-      this.hero.root.position.addScaledVector(direction, MOVE_SPEED * delta);
+      this.currentMoveDirection.copy(direction);
+
+      if (!this.isRunJumpInAir()) {
+        this.hero.root.position.addScaledVector(direction, MOVE_SPEED * delta);
+      }
 
       const targetRotation = Math.atan2(direction.x, direction.z);
       this.hero.root.rotation.y = lerpAngle(
@@ -437,6 +479,8 @@ export class CharacterLabScene {
         targetRotation,
         Math.min(1, TURN_SPEED * delta)
       );
+    } else {
+      this.currentMoveDirection.set(0, 0, 0);
     }
 
     if (this.input.consumeJumpPressed()) {
@@ -449,11 +493,16 @@ export class CharacterLabScene {
 
   requestJump() {
     if (!this.hero || !this.isGrounded || this.pendingJumpLaunchSeconds !== null) return;
-    if (!this.hero.playJumpIfAvailable({ moving: this.isMovingForJump })) return;
+    const moving = this.isMovingForJump;
+    if (!this.hero.playJumpIfAvailable({ moving })) return;
 
+    this.activeJumpType = moving ? "run" : "standing";
+    this.activeJumpSettings = moving ? this.runJumpSettings : this.jumpSettings;
     this.isGrounded = false;
     this.verticalVelocity = 0;
-    this.pendingJumpLaunchSeconds = this.jumpSettings.launchDelayMs / 1000;
+    this.jumpHorizontalVelocity.set(0, 0, 0);
+    this.jumpLaunchDirection.copy(this.currentMoveDirection);
+    this.pendingJumpLaunchSeconds = this.activeJumpSettings.launchDelayMs / 1000;
 
     if (this.pendingJumpLaunchSeconds <= 0) {
       this.launchJump();
@@ -462,7 +511,14 @@ export class CharacterLabScene {
 
   launchJump() {
     this.pendingJumpLaunchSeconds = null;
-    this.verticalVelocity = this.jumpSettings.force;
+    this.verticalVelocity = this.activeJumpSettings.force;
+
+    if (this.activeJumpType === "run") {
+      const launchDirection = this.jumpLaunchDirection.lengthSq() > 0
+        ? this.jumpLaunchDirection
+        : new THREE.Vector3(Math.sin(this.hero.root.rotation.y), 0, Math.cos(this.hero.root.rotation.y));
+      this.jumpHorizontalVelocity.copy(launchDirection).multiplyScalar(this.runJumpSettings.forwardSpeed);
+    }
   }
 
   updateJump(delta) {
@@ -476,14 +532,19 @@ export class CharacterLabScene {
       return;
     }
 
-    this.verticalVelocity -= this.jumpSettings.gravity * delta;
+    this.verticalVelocity -= this.activeJumpSettings.gravity * delta;
+    this.hero.root.position.addScaledVector(this.jumpHorizontalVelocity, delta);
     this.hero.root.position.y += this.verticalVelocity * delta;
 
     if (this.hero.root.position.y <= this.jumpSettings.groundOffset) {
       this.hero.root.position.y = this.jumpSettings.groundOffset;
       this.verticalVelocity = 0;
+      this.jumpHorizontalVelocity.set(0, 0, 0);
+      this.jumpLaunchDirection.set(0, 0, 0);
       this.isGrounded = true;
       this.pendingJumpLaunchSeconds = null;
+      this.activeJumpType = "standing";
+      this.activeJumpSettings = this.jumpSettings;
     }
   }
 
@@ -556,7 +617,11 @@ export class CharacterLabScene {
       return 0;
     }
 
-    return this.jumpSettings.airFootLift;
+    return this.activeJumpSettings.airFootLift ?? 0;
+  }
+
+  isRunJumpInAir() {
+    return this.activeJumpType === "run" && !this.isGrounded;
   }
 
   resize() {
