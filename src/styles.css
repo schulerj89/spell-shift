@@ -141,6 +141,39 @@ label {
   font-size: 0.9rem;
 }
 
+.range-control {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 10px;
+  margin-bottom: 10px;
+}
+
+.range-control input {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.range-control span {
+  color: #96d2bb;
+  font-variant-numeric: tabular-nums;
+}
+
+.secondary-button {
+  width: 100%;
+  min-height: 34px;
+  border: 1px solid rgba(150, 210, 187, 0.44);
+  border-radius: 6px;
+  color: #f4f2ea;
+  background: rgba(150, 210, 187, 0.12);
+  cursor: pointer;
+}
+
+.secondary-button:hover,
+.secondary-button:focus {
+  border-color: #96d2bb;
+  outline: none;
+}
+
 @media (max-width: 720px) {
   #debug-panel {
     top: auto;

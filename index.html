@@ -31,6 +31,27 @@
         </section>
 
         <section>
+          <h2>Camera</h2>
+          <label class="range-control">
+            Distance <span id="camera-distance-value">4.8</span>
+            <input id="camera-distance" type="range" min="2.5" max="9" step="0.1" value="4.8" />
+          </label>
+          <label class="range-control">
+            Height <span id="camera-height-value">2.3</span>
+            <input id="camera-height" type="range" min="0.7" max="5" step="0.1" value="2.3" />
+          </label>
+          <label class="range-control">
+            Target <span id="camera-target-value">1.1</span>
+            <input id="camera-target" type="range" min="0.2" max="2.4" step="0.1" value="1.1" />
+          </label>
+          <label class="range-control">
+            Side <span id="camera-side-value">0.0</span>
+            <input id="camera-side" type="range" min="-2.5" max="2.5" step="0.1" value="0" />
+          </label>
+          <button id="reset-follow-camera" class="secondary-button" type="button">Reset behind character</button>
+        </section>
+
+        <section>
           <h2>Movement</h2>
           <p>WASD or arrow keys move. Hold left click to look around. Space jumps when a jump clip is available. Number keys play clips.</p>
         </section>

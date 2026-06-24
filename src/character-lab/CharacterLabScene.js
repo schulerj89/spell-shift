@@ -3,7 +3,12 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { HeroCharacter } from "./HeroCharacter.js";
 import { InputController } from "./InputController.js";
 
-const CAMERA_FOLLOW_OFFSET = new THREE.Vector3(0, 2.25, 4.25);
+const DEFAULT_CAMERA_SETTINGS = {
+  distance: 4.8,
+  height: 2.3,
+  targetHeight: 1.1,
+  sideOffset: 0
+};
 const MOVE_SPEED = 2.8;
 const TURN_SPEED = 12;
 const JUMP_SPEED = 4.8;
@@ -40,8 +45,8 @@ export class CharacterLabScene {
     this.hero = null;
     this.followCamera = true;
     this.followCameraYaw = 0;
-    this.followCameraPitch = Math.atan2(CAMERA_FOLLOW_OFFSET.y, CAMERA_FOLLOW_OFFSET.z);
     this.isPointerLooking = false;
+    this.cameraSettings = { ...DEFAULT_CAMERA_SETTINGS };
     this.verticalVelocity = 0;
     this.isGrounded = true;
     this.animationFrameId = null;
@@ -172,12 +177,59 @@ export class CharacterLabScene {
     });
 
     this.controls.enabled = !this.followCamera;
+    this.bindCameraControls();
   }
 
   bindCheckbox(selector, onChange) {
     const input = document.querySelector(selector);
     if (!input) return;
     input.addEventListener("change", () => onChange(input.checked));
+  }
+
+  bindCameraControls() {
+    this.bindRange("#camera-distance", "#camera-distance-value", "distance");
+    this.bindRange("#camera-height", "#camera-height-value", "height");
+    this.bindRange("#camera-target", "#camera-target-value", "targetHeight");
+    this.bindRange("#camera-side", "#camera-side-value", "sideOffset");
+
+    document.querySelector("#reset-follow-camera")?.addEventListener("click", () => {
+      this.cameraSettings = { ...DEFAULT_CAMERA_SETTINGS };
+      this.syncCameraControlValues();
+      this.resetFollowCameraBehindCharacter();
+    });
+
+    this.syncCameraControlValues();
+  }
+
+  bindRange(inputSelector, valueSelector, settingKey) {
+    const input = document.querySelector(inputSelector);
+    const value = document.querySelector(valueSelector);
+    if (!input) return;
+
+    const update = () => {
+      this.cameraSettings[settingKey] = Number(input.value);
+      if (value) value.textContent = Number(input.value).toFixed(1);
+    };
+
+    input.addEventListener("input", update);
+    update();
+  }
+
+  syncCameraControlValues() {
+    const controls = [
+      ["#camera-distance", "#camera-distance-value", "distance"],
+      ["#camera-height", "#camera-height-value", "height"],
+      ["#camera-target", "#camera-target-value", "targetHeight"],
+      ["#camera-side", "#camera-side-value", "sideOffset"]
+    ];
+
+    controls.forEach(([inputSelector, valueSelector, settingKey]) => {
+      const input = document.querySelector(inputSelector);
+      const value = document.querySelector(valueSelector);
+      if (!input) return;
+      input.value = String(this.cameraSettings[settingKey]);
+      if (value) value.textContent = this.cameraSettings[settingKey].toFixed(1);
+    });
   }
 
   renderAnimationButtons(clips) {
@@ -235,11 +287,12 @@ export class CharacterLabScene {
     if (!this.isPointerLooking || !this.followCamera) return;
 
     this.followCameraYaw -= event.movementX * LOOK_SENSITIVITY;
-    this.followCameraPitch = THREE.MathUtils.clamp(
-      this.followCameraPitch + event.movementY * LOOK_SENSITIVITY,
-      MIN_CAMERA_PITCH,
-      MAX_CAMERA_PITCH
+    this.cameraSettings.height = THREE.MathUtils.clamp(
+      this.cameraSettings.height + event.movementY * LOOK_SENSITIVITY * 7,
+      MIN_CAMERA_PITCH * this.cameraSettings.distance,
+      MAX_CAMERA_PITCH * this.cameraSettings.distance
     );
+    this.syncCameraControlValues();
   }
 
   handlePointerUp(event) {
@@ -315,33 +368,55 @@ export class CharacterLabScene {
   updateCamera(delta) {
     if (!this.hero || !this.followCamera) return;
 
-    const followDistance = CAMERA_FOLLOW_OFFSET.length();
-    const horizontalDistance = Math.cos(this.followCameraPitch) * followDistance;
-    const desiredOffset = new THREE.Vector3(
-      Math.sin(this.followCameraYaw) * horizontalDistance,
-      Math.sin(this.followCameraPitch) * followDistance,
-      Math.cos(this.followCameraYaw) * horizontalDistance
-    );
+    const desiredOffset = this.getFollowCameraOffset();
     const desiredPosition = this.hero.root.position.clone().add(desiredOffset);
-    const desiredTarget = this.hero.root.position.clone().add(new THREE.Vector3(0, 1.05, 0));
+    const desiredTarget = this.hero.root.position
+      .clone()
+      .add(new THREE.Vector3(0, this.cameraSettings.targetHeight, 0));
 
     this.camera.position.lerp(desiredPosition, Math.min(1, delta * 5));
     this.controls.target.lerp(desiredTarget, Math.min(1, delta * 8));
   }
 
+  getFollowCameraOffset() {
+    const forwardBack = new THREE.Vector3(
+      Math.sin(this.followCameraYaw) * this.cameraSettings.distance,
+      0,
+      Math.cos(this.followCameraYaw) * this.cameraSettings.distance
+    );
+    const side = new THREE.Vector3(
+      Math.cos(this.followCameraYaw) * this.cameraSettings.sideOffset,
+      0,
+      -Math.sin(this.followCameraYaw) * this.cameraSettings.sideOffset
+    );
+
+    return forwardBack.add(side).add(new THREE.Vector3(0, this.cameraSettings.height, 0));
+  }
+
   syncFollowAnglesFromCamera() {
     if (!this.hero) return;
 
-    const target = this.hero.root.position.clone().add(new THREE.Vector3(0, 1.05, 0));
+    const target = this.hero.root.position
+      .clone()
+      .add(new THREE.Vector3(0, this.cameraSettings.targetHeight, 0));
     const offset = this.camera.position.clone().sub(target);
-    const horizontalDistance = Math.hypot(offset.x, offset.z);
 
     this.followCameraYaw = Math.atan2(offset.x, offset.z);
-    this.followCameraPitch = THREE.MathUtils.clamp(
-      Math.atan2(offset.y, horizontalDistance),
-      MIN_CAMERA_PITCH,
-      MAX_CAMERA_PITCH
-    );
+    this.cameraSettings.distance = THREE.MathUtils.clamp(Math.hypot(offset.x, offset.z), 2.5, 9);
+    this.cameraSettings.height = THREE.MathUtils.clamp(offset.y, 0.7, 5);
+    this.syncCameraControlValues();
+  }
+
+  resetFollowCameraBehindCharacter() {
+    if (!this.hero) return;
+
+    this.followCameraYaw = this.hero.root.rotation.y + Math.PI;
+    const desiredTarget = this.hero.root.position
+      .clone()
+      .add(new THREE.Vector3(0, this.cameraSettings.targetHeight, 0));
+
+    this.camera.position.copy(this.hero.root.position).add(this.getFollowCameraOffset());
+    this.controls.target.copy(desiredTarget);
   }
 
   resize() {
