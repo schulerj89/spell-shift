@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.3 - 2026-06-23
+
+- Added the `Jump Over Obstacle 2` hero animation asset to the character manifests.
+- Updated jump selection so Space uses `Regular Jump` while still and `Jump Over Obstacle 2` while moving.
+- Synced airborne jump hitbox lift with the launch delay so it starts when the physics jump launches.
+
 ## 0.1.2 - 2026-06-23
 
 - Added left-click drag look controls for the follow camera.
